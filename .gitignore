@@ -1,0 +1,93 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+wheels/
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg-info/
+
+# Flask environment variables
+instance/
+.env
+.venv
+venv/
+env/
+ENV/
+env.bak/
+env/
+*.env
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite3
+*.db
+
+# Pytest cache
+.pytest_cache/
+
+# Test coverage reports
+htmlcov/
+.tox/
+.cache/
+.coverage
+.coverage.*
+
+# Virtual environments
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.orig
+*.bak
+*.sublime-workspace
+
+# Distribution / packaging
+wheelhouse/
+
+# Node.js files (if using JavaScript or Webpack for frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Flask Cache Files
+.cache/
+__pycache__/
+
+# Flask uploads folder (if you have one for user uploads)
+uploads/
+
+# Local environment variables or secrets
+*.key
+*.crt
+
+# Gunicorn (if using Gunicorn for deployment)
+gunicorn.pid
+
+# Pyre type checker
+pyre/
+
+# Django specific
+db.sqlite3
+
+# MacOS specific files
+.DS_Store
