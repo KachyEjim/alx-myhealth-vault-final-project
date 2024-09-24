@@ -15,7 +15,9 @@ python-dotenv = "*"
 flask-caching = "*"
 flasgger = "*"
 flask-bcrypt = "*"
-flask-pymongo = "*"
+flask-sqlalchemy = "*"
+psycopg2 = "*"
+flask-migrate = "*"
 
 [dev-packages]
 
