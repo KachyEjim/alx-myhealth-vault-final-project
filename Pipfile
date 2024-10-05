@@ -8,16 +8,15 @@ flask = "*"
 flask-cors = "*"
 gunicorn = "*"
 flask-mail = "*"
-flask-session = "*"
 redis = "*"
-flask-login = "*"
 python-dotenv = "*"
-flask-caching = "*"
 flasgger = "*"
 flask-bcrypt = "*"
 flask-sqlalchemy = "*"
 psycopg2 = "*"
 flask-migrate = "*"
+pytz = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 
