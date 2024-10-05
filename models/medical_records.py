@@ -1,8 +1,10 @@
 from datetime import datetime
+from sqlalchemy import Column, String, Text, DateTime
+from sqlalchemy.orm import relationship
 from base_model import Basemodel
 from api import db
 
-class Medical_records(base_model):
+class MedicalRecords(BaseModel):
     '''
     Medical_record inheriting the BaseModel
     
@@ -20,35 +22,35 @@ class Medical_records(base_model):
     __tablename__ = 'medical_records'
 
     user_id = db.Column(db.String(50), db.ForeignKey('users.id'), nullable=False)
-    Record_Name = db.Column(db.String(200), nullable=False)
-    HealthCare_Provider = db.Column(db.String(100), nullable=False)
-    Type_of_Record = db.Column(db.String(70), nullable=False)
-    Diagnsis = db.Column(db.String(100), nullable=False)
-    Notes = db.Column(db.Text, nullable=True)
+    record_name = db.Column(db.String(200), nullable=False)
+    healthCare_Provider = db.Column(db.String(100), nullable=False)
+    type_of_Record = db.Column(db.String(70), nullable=False)
+    diagnsis = db.Column(db.String(100), nullable=False)
+    notes = db.Column(db.Text, nullable=True)
     last_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdated=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Refernce the User model
-    user = db.relationship('Users', backref=db.backref('edical_records', lazy=True))
+    user = db.relationship('Users', backref=db.backref('medical_records', lazy=True))
     def __repr__(self):
         '''
         Return string Representation of the medical_record instance showing record name and diagnosis
         '''
 
-        return f'<Medical_reord{self.Record_Name} ({self.Diagnosis})>'
-    def to_dit():
+        return f'<Medical_reord{self.record_name} ({self.diagnosis})>'
+    def to_dict():
         '''
         converts the medical_reord instance into a dictionary format
         '''
         return {
                 'id': self.id,
                 'user_id': self.user_id,
-                'Record_Name': self.Record_Name,
-                'HealthCare_Provider': self.HealthCare_Provider,
-                'Type_of_Record': self.Type_of_Record,
-                'Diagnosis': self.Diagnosis,
-                'Notes': self.Notes,
-                'last_added' self.last_added.isoformat(),
+                'record_Name': self.Record_Name,
+                'healthCare_Provider': self.HealthCare_Provider,
+                'type_of_Record': self.Type_of_Record,
+                'diagnosis': self.Diagnosis,
+                'notes': self.Notes,
+                'last_added': self.last_added.isoformat(),
                 'last_updated': self.last_updated.isoformat(),
                 'created_at': self.created_at.isoformat(),
                 'updated_at': self.updated_at.isoformat(),
