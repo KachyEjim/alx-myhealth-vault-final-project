@@ -37,6 +37,7 @@ class User(BaseModel):
     age = db.Column(db.Integer, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=True)
     is_active = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False)
     bio = db.Column(db.String(500), nullable=True, default="")
     last_login = db.Column(db.DateTime, nullable=True)
 
