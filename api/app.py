@@ -85,4 +85,4 @@ if __name__ == "__main__":
         db.create_all()
     host = environ.get('HBNB_API_HOST', '0.0.0.0')
     port = environ.get('HBNB_API_PORT', '5000')
-    app.run(host=host, port=port, threaded=True)
+    app.run(host=host, port=port, threaded=True, debug=True)
