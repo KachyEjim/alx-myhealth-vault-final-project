@@ -2,7 +2,7 @@ from . import app_views
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token
 from api import db
-from api.app import mail
+
 from models.user import User
 import jwt
 from datetime import datetime, timedelta
