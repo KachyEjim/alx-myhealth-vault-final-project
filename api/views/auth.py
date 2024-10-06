@@ -2,12 +2,12 @@ from . import app_views
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token
 from api import db
-
 from models.user import User
 import jwt
 from datetime import datetime, timedelta
 from flask_mail import Message
 from jwt import ExpiredSignatureError, InvalidTokenError
+from api.config import Config
 
 
 @app_views.route("/signup", methods=["POST"], strict_slashes=False)
@@ -139,7 +139,7 @@ def send_verification_email(user):
             "user_id": user.id,
             "exp": datetime.utcnow() + timedelta(hours=24),  # Token expires in 24 hours
         },
-        app_views.config["SECRET_KEY"],
+        Config.SECRET_KEY,
         algorithm="HS256",
     )
 
@@ -166,7 +166,7 @@ def send_verification_email(user):
 def verify_email(token):
     try:
         # Decode the JWT token to get the user ID
-        payload = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
         user_id = payload["user_id"]
 
         # Retrieve the user and mark them as verified
@@ -177,8 +177,8 @@ def verify_email(token):
                 404,
             )
 
-        user.is_verified = True  # Mark the user as verified
-        db.session.commit()  # Save changes to the database
+        user.is_verified = True 
+        db.session.commit()
 
         return (
             jsonify({"message": "Email verified successfully. You can now log in."}),
