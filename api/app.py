@@ -10,6 +10,7 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, cr
 from datetime import timedelta
 from flask_mail import Mail, Message
 
+
 app = Flask(__name__)
 app.config.from_object(Config)
 bcrypt.init_app(app)
@@ -75,6 +76,7 @@ def test():
     return jsonify("test view")
 
 
+swagger = Swagger(app, template_file='swagger_doc.yaml')
 
 
 
