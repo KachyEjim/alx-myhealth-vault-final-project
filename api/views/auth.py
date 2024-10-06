@@ -12,7 +12,6 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 
 @app_views.route("/signup", methods=["POST"], strict_slashes=False)
 def signup():
-
     data = request.get_json()
 
     full_name = data.get("full_name")
@@ -40,6 +39,7 @@ def signup():
             jsonify({"error": "USER_EXISTS", "message": "Email is already in use."}),
             400,
         )
+
     try:
         new_user = User(
             full_name=full_name,
@@ -54,7 +54,15 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
 
-        return jsonify({"message": "User registered successfully!"}), 201
+        # Send verification email after successful registration
+        send_verification_email(new_user)
+
+        return (
+            jsonify(
+                {"message": "User registered successfully! Verification email sent."}
+            ),
+            201,
+        )
 
     except Exception as e:
         return (
@@ -135,13 +143,17 @@ def send_verification_email(user):
         algorithm="HS256",
     )
 
-    verification_link = f"http://yourdomain.com/verify-email/{token}"
+    verification_link = (
+        f"https://myhealthvault-backend.onrender.com/api/verify-email/{token}"
+    )
 
     msg = Message(
         subject="Email Verification",
         recipients=[user.email],
         body=f"Hi {user.username},\n\nPlease verify your email address by clicking the link below:\n\n{verification_link}\n\nIf you did not sign up for this account, please ignore this email.",
     )
+    from api.app import mail
+
     mail.send(msg)
 
     return (
