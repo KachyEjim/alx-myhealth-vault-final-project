@@ -1,0 +1,517 @@
+swagger: "2.0"
+info:
+  title: User Management API
+  version: 1.0.0
+  description: API for managing user accounts, including registration, authentication, and profile management.
+host: localhost:5000
+basePath: /api
+schemes:
+  - http
+
+paths:
+  /signup:
+    post:
+      summary: User Signup
+      description: Creates a new user account.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              full_name:
+                type: string
+                description: The full name of the user.
+                example: "John Doe"
+              phone_number:
+                type: string
+                description: The phone number of the user.
+                example: "1234567890"
+              gender:
+                type: string
+                description: The gender of the user (e.g., Male, Female, Other).
+                example: "Male"
+              address:
+                type: string
+                description: The address of the user.
+                example: "123 Street Name"
+              email:
+                type: string
+                description: The email address of the user.
+                example: "johndoe@example.com"
+              password:
+                type: string
+                description: The password for the user's account.
+                example: "securepassword"
+              age:
+                type: integer
+                description: The age of the user.
+                example: 30
+      responses:
+        201:
+          description: User registered successfully. A verification email has been sent.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "User registered successfully! Verification email sent."
+        400:
+          description: Missing fields or user already exists.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "MISSING_FIELDS"
+              message:
+                type: string
+                example: "Full name, email, and password are required."
+        500:
+          description: Internal server error.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
+
+  /login:
+    post:
+      summary: User Login
+      description: Authenticates users by verifying their email and password.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: The email address of the user.
+                example: "johndoe@example.com"
+              password:
+                type: string
+                description: The password for the user's account.
+                example: "securepassword"
+      responses:
+        200:
+          description: Login successful.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Login successful"
+              access_token:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIs..."
+              refresh_token:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiIs..."
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  full_name:
+                    type: string
+                    example: "John Doe"
+        401:
+          description: Invalid credentials.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INVALID_CREDENTIALS"
+              message:
+                type: string
+                example: "Invalid email or password."
+
+  /verify-email/{token}:
+    get:
+      summary: Verify Email
+      description: Verifies the user's email address using a token sent via email.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The verification token sent to the user's email.
+          type: string
+      responses:
+        200:
+          description: Email verified successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Email verified successfully. You can now log in."
+        400:
+          description: Token expired or invalid.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INVALID_TOKEN"
+              message:
+                type: string
+                example: "Invalid verification token."
+
+  /resend-verification:
+    post:
+      summary: Resend Verification Email
+      description: Resends the verification email to the user.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: The email address of the user.
+                example: "johndoe@example.com"
+      responses:
+        200:
+          description: Verification email resent successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Verification email resent. Please check your inbox."
+        404:
+          description: User not found.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "No user found with that email."
+
+  /forgot-password:
+    post:
+      summary: Forgot Password
+      description: Initiates the password reset process by sending a reset email.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: The email address of the user.
+                example: "johndoe@example.com"
+      responses:
+        200:
+          description: Password reset email sent.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Password reset email sent."
+        404:
+          description: User not found.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "No user found with that email."
+
+  /reset-password/{token}:
+    post:
+      summary: Reset Password
+      description: Resets the user's password using a token from the password reset email.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The reset password token.
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              new_password:
+                type: string
+                description: The new password for the user account.
+                example: "newsecurepassword"
+      responses:
+        200:
+          description: Password reset successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Password reset successfully."
+        400:
+          description: Token expired or invalid.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "TOKEN_EXPIRED"
+              message:
+                type: string
+                example: "The reset token has expired."
+
+  /change-password:
+    post:
+      summary: Change Password
+      description: Allows users to change their current password.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              old_password:
+                type: string
+                description: The current password of the user.
+                example: "oldpassword"
+              new_password:
+                type: string
+                description: The new password for the user account.
+                example: "newpassword"
+      responses:
+        200:
+          description: Password changed successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Password changed successfully."
+        400:
+          description: Missing fields or old password incorrect.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "MISSING_FIELDS"
+              message:
+                type: string
+                example: "Old password is required."
+
+  /user:
+    get:
+      summary: Get User Information
+      description: Retrieves user information based on provided criteria (user ID or email).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: false
+          description: The ID of the user to retrieve.
+          type: integer
+          example: 1
+        - name: email
+          in: query
+          required: false
+          description: The email of the user to retrieve.
+          type: string
+          example: "johndoe@example.com"
+      responses:
+        200:
+          description: User information retrieved successfully.
+          schema:
+            type: object
+            properties:
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  full_name:
+                    type: string
+                    example: "John Doe"
+                  email:
+                    type: string
+                    example: "johndoe@example.com"
+        400:
+          description: Missing criteria for user retrieval.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "MISSING_CRITERIA"
+              message:
+                type: string
+                example: "Please provide a valid ID or email."
+        404:
+          description: User not found.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "User not found."
+
+  /user/{user_id}:
+    put:
+      summary: Update User Information
+      description: Updates the user's profile based on provided information.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user to update.
+          type: integer
+          example: 1
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              full_name:
+                type: string
+                example: "John Doe"
+                description: The updated full name of the user.
+              phone_number:
+                type: string
+                example: "1234567890"
+                description: The updated phone number of the user.
+              gender:
+                type: string
+                example: "Male"
+                description: The updated gender of the user.
+              address:
+                type: string
+                example: "123 Street Name"
+                description: The updated address of the user.
+              age:
+                type: integer
+                example: 30
+                description: The updated age of the user.
+              password:
+                type: string
+                example: "newpassword"
+                description: The new password for the user.
+      responses:
+        200:
+          description: User updated successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "User updated successfully!"
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  full_name:
+                    type: string
+                    example: "John Doe"
+        403:
+          description: Unauthorized to update the user information.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "UNAUTHORIZED"
+              message:
+                type: string
+                example: "You can only update your own information."
+        404:
+          description: User not found.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "User not found."
+
+    delete:
+      summary: Delete User Account
+      description: Deletes the user account from the system.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user to delete.
+          type: integer
+          example: 1
+      responses:
+        200:
+          description: User deleted successfully.
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "User deleted successfully!"
+        403:
+          description: Unauthorized to delete the user account.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "UNAUTHORIZED"
+              message:
+                type: string
+                example: "You can only delete your own account."
+        404:
+          description: User not found.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "User not found."
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
