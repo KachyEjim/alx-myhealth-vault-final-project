@@ -10,7 +10,7 @@ from flask_mail import Message
 from jwt import ExpiredSignatureError, InvalidTokenError
 
 
-@app_views.route("doc/signup", methods=["POST"], strict_slashes=False)
+@app_views.route("/signup", methods=["POST"], strict_slashes=False)
 def signup():
 
     data = request.get_json()
@@ -201,10 +201,18 @@ def resend_verification_email():
     user = User.query.filter_by(email=email).first()
 
     if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "No user found with that email."}), 404
+        return (
+            jsonify(
+                {"error": "USER_NOT_FOUND", "message": "No user found with that email."}
+            ),
+            404,
+        )
 
     if user.is_verified:
         return jsonify({"message": "This account is already verified."}), 400
 
     send_verification_email(user)
-    return jsonify({"message": "Verification email resent. Please check your inbox."}), 200
+    return (
+        jsonify({"message": "Verification email resent. Please check your inbox."}),
+        200,
+    )
