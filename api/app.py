@@ -20,6 +20,7 @@ migrate = Migrate(app, db)
 
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.config["JWT_SECRET_KEY"] = "your_secret_key" 
 
 def add_token_to_blocklist(jti, expires_in):
     jwt_redis_blocklist.setex(jti, expires_in, 'true')
@@ -49,7 +50,7 @@ def expired_token_callback(jwt_header, jwt_payload):
 def invalid_token_callback(error):
     return jsonify({
         "error": "INVALID_TOKEN",
-        "message": "The token is invalid. Please log in again."
+        "message": f"The token is invalid. Please log in again. {error}"
     }), 401
 
 @jwt.revoked_token_loader
@@ -70,9 +71,35 @@ def logout():
 
 
 @app.route('/test/', methods=['GET', 'POST'], strict_slashes=False)
+@jwt_required()
 def test():
-    return jsonify("test view")
+    try:
+        # Extract token data
+        jwt_data = get_jwt()  # Gets all claims of the token
+        user_id = get_jwt_identity()  # Gets the user identity from the token
 
+        # Print "Yes" if the token is valid
+        print("Yes, token is valid")
+
+        # Print all JWT data (including custom claims like role)
+        print("JWT Data:", user_id, jwt_data)
+
+        # Return a response
+        return jsonify({
+            "message": "Token is valid",
+            "token_data": jwt_data
+        }), 200
+
+    except Exception as e:
+        # Print "No" if there's an issue with the token
+        print("No, token is invalid")
+        print(f"Error: {str(e)}")
+
+        # Return an error response
+        return jsonify({
+            "error": "Invalid token",
+            "message": str(e)
+        }), 401
 
 swagger = Swagger(app, template_file='swagger_doc.yaml')
 

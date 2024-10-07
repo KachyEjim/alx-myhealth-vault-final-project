@@ -9,7 +9,7 @@ from models.user import User
 
 
 @app_views.route("/user", methods=["GET"])
-@jwt_required(refresh=True)
+@jwt_required()
 def get_user():
     user_id = request.args.get("id")
     email = request.args.get("email")
@@ -36,7 +36,7 @@ def get_user():
 
 
 @app_views.route("/user/<int:user_id>", methods=["PUT"])
-@jwt_required(refresh=True)
+@jwt_required()
 def update_user(user_id):
     current_user_id = get_jwt_identity()
 
@@ -67,10 +67,11 @@ def update_user(user_id):
             user.password = data["password"]
             user.hash_password()
 
-
             db.session.commit()
             return (
-                jsonify({"message": "User updated successfully!", "user": user.to_dict()}),
+                jsonify(
+                    {"message": "User updated successfully!", "user": user.to_dict()}
+                ),
                 200,
             )
     except Exception as e:
@@ -78,7 +79,7 @@ def update_user(user_id):
 
 
 @app_views.route("/user/<int:user_id>", methods=["DELETE"])
-@jwt_required(refresh=True)
+@jwt_required()
 def delete_user(user_id):
     current_user_id = get_jwt_identity()
 
