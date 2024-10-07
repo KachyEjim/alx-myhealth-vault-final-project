@@ -150,7 +150,7 @@ def send_verification_email(user):
     msg = Message(
         subject="Email Verification",
         recipients=[user.email],
-        body=f"Hi {user.username},\n\nPlease verify your email address by clicking the link below:\n\n{verification_link}\n\nIf you did not sign up for this account, please ignore this email.",
+        body=f"Hi {user.full_name},\n\nPlease verify your email address by clicking the link below:\n\n{verification_link}\n\nIf you did not sign up for this account, please ignore this email.",
     )
     from api.app import mail
 
