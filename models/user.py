@@ -90,4 +90,5 @@ class User(BaseModel):
                 if getattr(self, "updated_at", None)
                 else None
             ),
+            "role": getattr(self, "role", None),
         }
