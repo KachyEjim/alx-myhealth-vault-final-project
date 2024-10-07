@@ -1,14 +1,15 @@
-from flask import Flask, jasonify, requests, abort
+from flask import Flask, jasonify, request, abort
 from api import db
 from models.user import User
 from models.medical_records import MedicalRecords
 from . import app_views
 
-@app_views.route('/create_record', methods=['POST'])
+@app_views.route('/create_record/<user_id>', methods=['POST'])
 def create_record(user_id):
     """
 
     """
+    
     user = User.query.get("user_id")
     if not user:
         abort(404, message="error": "USER_NOT_FOUND")
