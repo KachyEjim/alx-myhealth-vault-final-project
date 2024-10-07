@@ -11,9 +11,9 @@ from models.user import User
 @app_views.route("/user", methods=["GET"])
 @jwt_required()
 def get_user():
-    user_id = request.args.get("id")
-    email = request.args.get("email")
-
+    data = request.get_json()
+    email = data.get("email")
+    user_id = data.get("id")
     if user_id:
         user = User.query.get(user_id)
     elif email:
