@@ -13,12 +13,14 @@ class Config:
     JWT_REFRESH_TOKEN_EXPIRES = 2600
     JWT_REFRESH_TOKEN_EXPIRES = 2592000
     JWT_BLACKLIST_ENABLED = True
-    JWT_BLACKLIST_TOKEN_CHECKS = ['access', 'refresh']
-    REDIS_URL=os.environ.get("REDIS_URL")
+    JWT_BLACKLIST_TOKEN_CHECKS = ["access", "refresh"]
+    REDIS_URL = os.environ.get("REDIS_URL")
 
-    MAIL_SERVER = 'smtp.example.com'  # Your email server
+    MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = 'your-email@example.com'  # Your email address
-    MAIL_PASSWORD = 'your-password'  # Your email password
-    MAIL_DEFAULT_SENDER = 'noreply@example.com'  # Default sender address
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = "noreply@example.com"
+    MAIL_SERVER = ""
+    MAIL_PORT = 587
