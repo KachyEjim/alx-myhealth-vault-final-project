@@ -40,6 +40,7 @@ class User(BaseModel):
     is_verified = db.Column(db.Boolean, default=False)
     bio = db.Column(db.String(500), nullable=True, default="")
     last_login = db.Column(db.DateTime, nullable=True)
+    role = db.Column(db.String(10), default="patient", nullable=True)
 
     def __repr__(self):
         return f"<User {self.full_name} ({self.email})>"

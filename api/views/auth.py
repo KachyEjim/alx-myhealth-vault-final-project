@@ -75,7 +75,7 @@ def signup():
         )
 
 
-@app_views.route("/login", methods=["POST"])
+@app_views.route("/login", methods=["POST"], strict_slashes=False)
 def login():
     data = request.get_json()
 
@@ -161,7 +161,7 @@ def send_verification_email(user):
     )
 
 
-@app_views.route("/verify-email/<token>", methods=["GET"])
+@app_views.route("/verify-email/<token>", methods=["GET"], strict_slashes=False)
 def verify_email(token):
     try:
         # Decode the JWT token to get the user ID
@@ -204,7 +204,7 @@ def verify_email(token):
         )
 
 
-@app_views.route("/resend-verification", methods=["POST"])
+@app_views.route("/resend-verification", methods=["POST"], strict_slashes=False)
 def resend_verification_email():
     data = request.get_json()
 
