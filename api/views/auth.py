@@ -51,9 +51,9 @@ def signup():
             age=age,
         )
         new_user.hash_password()
-        db.session.add(new_user)
+        """        db.session.add(new_user)
         db.session.commit()
-
+        """
         # Send verification email after successful registration
         send_verification_email(new_user)
 
@@ -177,7 +177,7 @@ def verify_email(token):
                 404,
             )
 
-        user.is_verified = True 
+        user.is_verified = True
         db.session.commit()
 
         return (

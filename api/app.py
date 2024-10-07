@@ -2,21 +2,19 @@ from flask import Flask, abort, jsonify, make_response, request
 from flask_cors import CORS
 from flasgger import Swagger
 from os import environ
-from . import db, bcrypt, jwt_redis_blocklist
+from . import db, bcrypt, jwt_redis_blocklist, mail
 from .config import Config
 from .views import app_views
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, create_refresh_token, get_jwt_identity, get_jwt
 from datetime import timedelta
-from flask_mail import Mail, Message
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
 bcrypt.init_app(app)
 jwt = JWTManager(app)
-mail = Mail(app)
-
+mail.init_app(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
