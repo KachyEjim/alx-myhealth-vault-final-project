@@ -1,9 +1,6 @@
 from . import app_views
 from flask import request, jsonify
-from flask_jwt_extended import (
-    jwt_required,
-    get_jwt_identity,
-)
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from api import db
 from models.user import User
 
@@ -35,12 +32,12 @@ def get_user():
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
 
 
-@app_views.route("/user/<int:user_id>", methods=["PUT"])
+@app_views.route("/update_user/<user_id>", methods=["PUT"])
 @jwt_required()
 def update_user(user_id):
     current_user_id = get_jwt_identity()
 
-    if int(current_user_id) != user_id:
+    if current_user_id != user_id:
         return (
             jsonify(
                 {
@@ -63,27 +60,21 @@ def update_user(user_id):
         user.address = data.get("address", user.address)
         user.age = data.get("age", user.age)
 
-        if "password" in data:
-            user.password = data["password"]
-            user.hash_password()
-
-            db.session.commit()
-            return (
-                jsonify(
-                    {"message": "User updated successfully!", "user": user.to_dict()}
-                ),
-                200,
-            )
+        db.session.commit()
+        return (
+            jsonify({"message": "User updated successfully!", "user": user.to_dict()}),
+            200,
+        )
     except Exception as e:
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
-@app_views.route("/user/<int:user_id>", methods=["DELETE"])
+@app_views.route("/delete_user/<user_id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(user_id):
     current_user_id = get_jwt_identity()
 
-    if int(current_user_id) != user_id:
+    if current_user_id != user_id:
         return (
             jsonify(
                 {
@@ -102,6 +93,11 @@ def delete_user(user_id):
     try:
         db.session.delete(user)
         db.session.commit()
-        return jsonify({"message": "User deleted successfully!"}), 200
+        jti = get_jwt()["jti"]
+        expires_in = get_jwt()["exp"] - get_jwt()["iat"]
+        from api.app import add_token_to_blocklist
+
+        add_token_to_blocklist(jti, expires_in)
+        return jsonify({"message": f"User {user_id} successfully deleted!"}), 200
     except Exception as e:
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
