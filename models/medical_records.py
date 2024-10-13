@@ -10,7 +10,7 @@ class MedicalRecords(BaseModel):
 
     __tablename__ = "medical_records"
 
-    userId = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
     record_name = db.Column(db.String(200), nullable=False)
     health_care_provider = db.Column(db.String(100), nullable=False)
     type_of_record = db.Column(db.String(70), nullable=False)
@@ -24,7 +24,7 @@ class MedicalRecords(BaseModel):
         db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
-    user = db.relationship("Users", backref=db.backref("medical_records", lazy=True))
+    user = db.relationship("User", backref=db.backref("medical_records", lazy=True))
 
     def __repr__(self):
         """String Representation showing record name and diagnosis"""

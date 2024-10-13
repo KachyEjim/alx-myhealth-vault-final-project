@@ -39,6 +39,8 @@ class Doctor(BaseModel):
     is_active = db.Column(db.Boolean, default=False)
     last_login = db.Column(db.DateTime, nullable=True)
 
+    appointments = db.relationship("Appointment", back_populates="doctor")
+
     def __repr__(self):
         return f"<Doctor {self.full_name} ({self.email})>"
 
