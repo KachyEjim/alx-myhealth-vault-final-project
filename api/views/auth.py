@@ -210,8 +210,6 @@ def verify_email(token):
         )
 
 
-
-
 @app_views.route("/resend-verification", methods=["POST"])
 def resend_verification_email():
     data = request.get_json()
@@ -315,6 +313,7 @@ def forgot_password():
         body=f"Click the link to reset your password: {reset_link}",
     )
     from api.app import mail
+
     mail.send(msg)
 
     return jsonify({"message": "Password reset email sent."}), 200
@@ -357,3 +356,15 @@ def change_password():
             ),
             401,
         )
+
+
+@app_views.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    # Get the identity of the user from the refresh token
+    current_user = get_jwt_identity()
+
+    # Create new access token
+    new_access_token = create_access_token(identity=current_user)
+
+    return jsonify(access_token=new_access_token)

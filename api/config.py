@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import storage, credentials
 from pathlib import Path
 import json
+from datetime import timedelta
 
 
 class Config:
@@ -22,6 +23,8 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.environ.get("DEFAULT_FROM_EMAIL")
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=48)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
