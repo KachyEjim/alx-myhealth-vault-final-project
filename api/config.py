@@ -27,7 +27,5 @@ class Config:
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 cred = credentials.Certificate(json.loads(os.environ.get("GOOGLE_CLOUD_CREDENTIALS")))
-firebase_admin.initialize_app(
-    cred, {"storageBucket": "stockely-1.appspot.com"}
-)
+firebase_admin.initialize_app(cred, {"storageBucket": "stockely-1.appspot.com"})
 bucket = storage.bucket()

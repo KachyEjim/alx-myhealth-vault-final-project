@@ -25,23 +25,21 @@ def create_appointment(user_id):
         )
 
     # Extract required fields from the JSON data
-    appointment_date = data.get("appointment_date")
-    appointment_time = data.get("appointment_time")
+    end_time = data.get("end_time")
+    start_time = data.get("start_time")
     description = data.get("description")
-
+    doctor_id = data.get("doctor_id")
+    status = data.get("status")
     # Validate required fields
-    if not appointment_date:
+
+    if not start_time:
         return (
-            jsonify(
-                {"error": "BAD_REQUEST", "message": "Appointment date is required."}
-            ),
+            jsonify({"error": "BAD_REQUEST", "message": "start date is required."}),
             400,
         )
-    if not appointment_time:
+    if not end_time:
         return (
-            jsonify(
-                {"error": "BAD_REQUEST", "message": "Appointment time is required."}
-            ),
+            jsonify({"error": "BAD_REQUEST", "message": "end time is required."}),
             400,
         )
 
@@ -49,9 +47,11 @@ def create_appointment(user_id):
         # Create a new Appointment object
         appointment = Appointment(
             userId=user_id,
-            appointment_date=appointment_date,
-            appointment_time=appointment_time,
             description=description,
+            start_time=start_time,
+            end_time=end_time,
+            status=status,
+            doctor_id=doctor_id,
         )
 
         db.session.add(appointment)  # Add appointment to the session
@@ -149,14 +149,11 @@ def update_appointment(appointment_id):
         )
 
     # Update fields that are present in the request
-    appointment.appointment_date = data.get(
-        "appointment_date", appointment.appointment_date
-    )
-    appointment.appointment_time = data.get(
-        "appointment_time", appointment.appointment_time
-    )
+    appointment.start_time = data.get("start_time", appointment.start_time)
+    appointment.end_time = data.get("end_time", appointment.end_time)
     appointment.description = data.get("description", appointment.description)
-
+    appointment.doctor_id = data.get("doctor_id", appointment.doctor_id)
+    appointment.status = data.get("status", appointment.status)
     try:
         # Commit changes to the database
         db.session.commit()
