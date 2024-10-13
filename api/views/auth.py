@@ -210,7 +210,7 @@ def verify_email(token):
         )
 
 
-@app_views.route("/resend-verification", methods=["POST"])
+@app_views.route("/resend-verification", methods=["POST"], strict_slashes=False)
 def resend_verification_email():
     data = request.get_json()
 
@@ -235,7 +235,7 @@ def resend_verification_email():
     )
 
 
-@app_views.route("/reset-password/<token>", methods=["POST"])
+@app_views.route("/reset-password/<token>", methods=["POST"], strict_slashes=False)
 def reset_password(token):
     try:
         payload = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
@@ -282,7 +282,7 @@ def reset_password(token):
         )
 
 
-@app_views.route("/forgot-password", methods=["POST"])
+@app_views.route("/forgot-password", methods=["POST"], strict_slashes=False)
 def forgot_password():
     data = request.get_json()
     email = data.get("email")
@@ -319,7 +319,7 @@ def forgot_password():
     return jsonify({"message": "Password reset email sent."}), 200
 
 
-@app_views.route("/change-password", methods=["POST"])
+@app_views.route("/change-password", methods=["POST"], strict_slashes=False)
 @jwt_required()
 def change_password():
     user_id = get_jwt_identity()
@@ -358,13 +358,11 @@ def change_password():
         )
 
 
-@app_views.route("/refresh", methods=["POST"])
+@app_views.route("/refresh", methods=["POST"], strict_slashes=False)
 @jwt_required(refresh=True)
 def refresh():
-    # Get the identity of the user from the refresh token
     current_user = get_jwt_identity()
 
-    # Create new access token
     new_access_token = create_access_token(identity=current_user)
 
     return jsonify(access_token=new_access_token)
