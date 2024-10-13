@@ -3,6 +3,7 @@
 from flask import Blueprint
 
 app_views = Blueprint("app_views", __name__, url_prefix="/api/")
-
 from .user import *
 from .auth import *
+from .medical_records import *
+from .appointment import *

@@ -8,7 +8,7 @@ from .views import app_views
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, create_refresh_token, get_jwt_identity, get_jwt
 from datetime import timedelta
-
+from models.doctor import Doctor
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,8 +17,14 @@ jwt = JWTManager(app)
 mail.init_app(app)
 db.init_app(app)
 migrate = Migrate(app, db)
-
-app.register_blueprint(app_views)
+for rule in app.url_map.iter_rules():
+    print(rule.endpoint, rule.rule)
+try:
+    app.register_blueprint(app_views)
+except Exception:
+    for rule in app.url_map.iter_rules():
+        print(rule.endpoint, rule.rule)
+    exit()
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config["JWT_SECRET_KEY"] = "your_secret_key" 
 

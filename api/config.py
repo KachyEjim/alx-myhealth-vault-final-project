@@ -1,4 +1,8 @@
 import os
+import firebase_admin
+from firebase_admin import storage, credentials
+from pathlib import Path
+import json
 
 
 class Config:
@@ -18,3 +22,12 @@ class Config:
     MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.environ.get("DEFAULT_FROM_EMAIL")
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+cred = credentials.Certificate(json.loads(os.environ.get("GOOGLE_CLOUD_CREDENTIALS")))
+firebase_admin.initialize_app(
+    cred, {"storageBucket": "stockely-1.appspot.com"}
+)
+bucket = storage.bucket()

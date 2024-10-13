@@ -18,6 +18,8 @@ flask-migrate = "*"
 pytz = "*"
 flask-jwt-extended = "*"
 flask = "*"
+firebase-admin = "*"
+pillow = "*"
 
 [dev-packages]
 

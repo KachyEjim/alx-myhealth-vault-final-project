@@ -1,6 +1,12 @@
 from . import app_views
 from flask import request, jsonify
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
 from api import db
 from models.user import User
 import jwt
@@ -204,7 +210,9 @@ def verify_email(token):
         )
 
 
-@app_views.route("/resend-verification", methods=["POST"], strict_slashes=False)
+
+
+@app_views.route("/resend-verification", methods=["POST"])
 def resend_verification_email():
     data = request.get_json()
 
@@ -227,3 +235,125 @@ def resend_verification_email():
         jsonify({"message": "Verification email resent. Please check your inbox."}),
         200,
     )
+
+
+@app_views.route("/reset-password/<token>", methods=["POST"])
+def reset_password(token):
+    try:
+        payload = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
+        user_id = payload["user_id"]
+        user = User.query.get(user_id)
+
+        data = request.get_json()
+        new_password = data.get("new_password")
+
+        if not new_password:
+            return (
+                jsonify(
+                    {
+                        "error": "MISSING_PASSWORD",
+                        "message": "New password is required.",
+                    }
+                ),
+                400,
+            )
+
+        user.password = new_password
+        user.hash_password()
+        db.session.commit()
+
+        return jsonify({"message": "Password reset successfully."}), 200
+
+    except jwt.ExpiredSignatureError:
+        return (
+            jsonify(
+                {
+                    "error": "TOKEN_EXPIRED",
+                    "message": "The password reset link has expired.",
+                }
+            ),
+            400,
+        )
+
+    except jwt.InvalidTokenError:
+        return (
+            jsonify(
+                {"error": "INVALID_TOKEN", "message": "Invalid password reset token."}
+            ),
+            400,
+        )
+
+
+@app_views.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "MISSING_EMAIL", "message": "Email is required."}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return (
+            jsonify(
+                {"error": "USER_NOT_FOUND", "message": "No user found with this email."}
+            ),
+            404,
+        )
+
+    token = jwt.encode(
+        {"user_id": user.id, "exp": datetime.utcnow() + timedelta(hours=1)},
+        Config.SECRET_KEY,
+        algorithm="HS256",
+    )
+    reset_link = f"http://yourdomain.com/reset-password/{token}"
+
+    msg = Message(
+        subject="Password Reset",
+        recipients=[email],
+        body=f"Click the link to reset your password: {reset_link}",
+    )
+    from api.app import mail
+    mail.send(msg)
+
+    return jsonify({"message": "Password reset email sent."}), 200
+
+
+@app_views.route("/change-password", methods=["POST"])
+@jwt_required()
+def change_password():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if not all([old_password, new_password]):
+        return (
+            jsonify(
+                {
+                    "error": "MISSING_FIELDS",
+                    "message": "Old and new passwords are required.",
+                }
+            ),
+            400,
+        )
+
+    user = User.query.get(user_id)
+
+    if user and user.check_password(old_password):
+        user.password = new_password
+        user.hash_password()
+        db.session.commit()
+        return jsonify({"message": "Password changed successfully."}), 200
+    else:
+        return (
+            jsonify(
+                {
+                    "error": "INVALID_CREDENTIALS",
+                    "message": "Old password is incorrect.",
+                }
+            ),
+            401,
+        )
