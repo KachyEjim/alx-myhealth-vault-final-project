@@ -17,8 +17,7 @@ jwt = JWTManager(app)
 mail.init_app(app)
 db.init_app(app)
 migrate = Migrate(app, db)
-for rule in app.url_map.iter_rules():
-    print(rule.endpoint, rule.rule)
+
 try:
     app.register_blueprint(app_views)
 except Exception:
@@ -31,7 +30,11 @@ app.config["JWT_SECRET_KEY"] = "your_secret_key"
 def add_token_to_blocklist(jti, expires_in):
     jwt_redis_blocklist.setex(jti, expires_in, 'true')
 
-
+"""@app.before_request
+def before_request():
+    for rule in app.url_map.iter_rules():
+        print(f"Endpoint: {rule.endpoint}, Route: {rule.rule}")
+"""
 @jwt.token_in_blocklist_loader
 def check_if_token_in_blocklist(jwt_header, jwt_payload):
     jti = jwt_payload['jti']

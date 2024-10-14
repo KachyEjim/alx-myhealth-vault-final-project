@@ -7,37 +7,45 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 import os
 import tempfile
+from api.config import bucket
 
 
 # Allowed image extensions
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 
 @app_views.route("/user", methods=["GET"], strict_slashes=False)
 @jwt_required()
 def get_user():
-    data = request.get_json()
-    email = data.get("email")
-    user_id = data.get("id")
-    if user_id:
-        user = User.query.get(user_id)
-    elif email:
-        user = User.query.filter_by(email=email).first()
-    else:
-        return (
-            jsonify(
-                {
-                    "error": "MISSING_CRITERIA",
-                    "message": "Please provide a valid ID or email.",
-                }
-            ),
-            400,
-        )
+    try:
+        data = request.get_json()
 
-    if user:
-        return jsonify({"user": user.to_dict()}), 200
-    else:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+        email = data.get("email")
+        user_id = data.get("id")
+        if user_id:
+            user = User.query.get(user_id)
+        elif email:
+            user = User.query.filter_by(email=email).first()
+        else:
+            return (
+                jsonify(
+                    {
+                        "error": "MISSING_CRITERIA",
+                        "message": "Please provide a valid ID or email.",
+                    }
+                ),
+                400,
+            )
+
+        if user:
+            return jsonify({"user": user.to_dict()}), 200
+        else:
+            return (
+                jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}),
+                404,
+            )
+    except Exception as e:
+        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
 @app_views.route("/update_user/<user_id>", methods=["PUT"], strict_slashes=False)
@@ -118,6 +126,7 @@ def allowed_file(filename):
 @app_views.route(
     "/upload-profile-picture/<user_id>", methods=["POST"], strict_slashes=False
 )
+@jwt_required()
 def profile_picture_upload(user_id):
     current_user_id = get_jwt_identity()
 
@@ -126,11 +135,12 @@ def profile_picture_upload(user_id):
             jsonify(
                 {
                     "error": "UNAUTHORIZED",
-                    "message": "You can only upload profile picture on your own account.",
+                    "message": "You can only upload a profile picture to your own account.",
                 }
             ),
             403,
         )
+
     if request.method == "POST":
         try:
             # Get the uploaded image
@@ -202,24 +212,32 @@ def profile_picture_upload(user_id):
                 )
 
             try:
+                user = User.query.get(user_id)
+                if not user:
+                    raise Exception("User not found")
+
+                # Check if user has an existing profile picture and delete it
+                if user.profile_picture:
+                    try:
+                        # Delete the existing file from cloud storage
+                        existing_blob = bucket.blob(
+                            f"profile_pictures/{user_id}.{user.profile_picture.split('.')[-1]}"
+                        )
+                        existing_blob.delete()
+                    except Exception as e:
+                        print(f"Error deleting existing profile picture: {e}")
+
                 # Save the uploaded file temporarily
                 with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                     for chunk in img.stream:
                         temp_file.write(chunk)
                     temp_file.flush()
 
-                print(temp_file.name)
-                print(os.path.isfile(temp_file.name))
-
-                user = User.query.get(user_id)
-                if not user:
-                    raise Exception
+                # Upload new profile picture and update the user profile
                 image_url = user.upload_file([(temp_file.name, img_format)], user_id)
-
-                # For the sake of this example, we'll simulate a success response
-
-                # Update the Firestore database or any other DB with the image URL
-                # db.collection("users").document(user_id).set({"profile_images": image_url}, merge=True)
+                user.profile_picture = image_url
+                db.session.add(user)
+                db.session.commit()
 
             except Exception as e:
                 return (
