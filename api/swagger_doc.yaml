@@ -110,6 +110,43 @@ paths:
           description: "User not verified."
         500:
           description: "Internal server error."
+  /refresh:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Refresh access token"
+      description: "Generate a new access token using the refresh token."
+      responses:
+        200:
+          description: "Access token refreshed successfully."
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+                example: "new_access_token_here"
+        401:
+          description: "Unauthorized. Refresh token is missing or invalid."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "UNAUTHORIZED"
+              message:
+                type: string
+                example: "Refresh token is missing or invalid."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
 
   /verify-email/{token}:
     get:
@@ -336,6 +373,75 @@ paths:
           description: "Internal Server Error."
       security:
         - jwt: []
+  /appointments:
+    get:
+      tags:
+        - "Appointment"
+      summary: "Retrieve appointments"
+      description: "Fetch a list of appointments with optional filtering by status."
+      parameters:
+        - in: query
+          name: user_id
+          required: false
+          description: "ID of the user whose appointments are being retrieved."
+          type: integer
+        - in: query
+          name: status
+          required: false
+          description: "Filter appointments by status (upcoming, completed, missed, canceled)."
+          type: string
+          enum:
+            - upcoming
+            - completed
+            - missed
+            - canceled
+        - in: query
+          name: limit
+          required: false
+          description: "Limit the number of results returned."
+          type: integer
+        - in: query
+          name: sort_by
+          required: false
+          description: "Field to sort results by (e.g., start_time, status)."
+          type: string
+        - in: query
+          name: sort_order
+          required: false
+          description: "Sorting order: 'asc' or 'desc'."
+          type: string
+          enum:
+            - asc
+            - desc
+      responses:
+        200:
+          description: "List of appointments retrieved successfully."
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Appointment"
+        404:
+          description: "User not found."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_FOUND"
+              message:
+                type: string
+                example: "User not found."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
 
   /create_record/{user_id}:
     post:

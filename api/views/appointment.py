@@ -1,10 +1,96 @@
-from . import app_views
 from flask import jsonify, request
-from api import db
-from models.user import User
-from sqlalchemy import asc, desc
+from datetime import datetime, timedelta
+from api import db, mail
 from models.appointment import Appointment
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from models.user import User
+from . import app_views
+from flask_jwt_extended import jwt_required
+
+
+@app_views.route("/get_appointments/<user_id>", methods=["POST"])
+@jwt_required()
+def get_appointments(user_id):
+    # Check if the user exists
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+
+    # Get the request data
+    data = request.get_json()
+
+    # Check if appointment_id is provided in the request
+    appointment_id = data.get("id")
+    if appointment_id:
+        # If appointment_id is provided, return that specific appointment
+        appointment = Appointment.query.get(appointment_id)
+        if not appointment or appointment.user_id != user_id:
+            return (
+                jsonify(
+                    {
+                        "error": "APPOINTMENT_NOT_FOUND",
+                        "message": "Appointment not found.",
+                    }
+                ),
+                404,
+            )
+        return jsonify(appointment.to_dict()), 200
+
+    # If no appointment_id is provided, search for appointments based on other criteria
+    query = Appointment.query.filter_by(user_id=user_id)
+
+    # Search by optional criteria from the request data
+    start_time = data.get("start_time")
+    end_time = data.get("end_time")
+    status = data.get("status")
+    doctor_id = data.get("doctor_id")
+
+    if start_time:
+        query = query.filter(
+            Appointment.start_time >= datetime.fromisoformat(start_time)
+        )
+    if end_time:
+        query = query.filter(Appointment.end_time <= datetime.fromisoformat(end_time))
+    if doctor_id:
+        query = query.filter_by(doctor_id=doctor_id)
+
+    # Filter by status (Upcoming, Completed, Missed, Canceled)
+    if status:
+        current_time = datetime.now()
+        if status == "Upcoming":
+            query = query.filter(
+                Appointment.start_time > current_time, Appointment.status == "Upcoming"
+            )
+        elif status == "Completed":
+            query = query.filter(
+                Appointment.end_time < current_time, Appointment.status == "Completed"
+            )
+        elif status == "Missed":
+            query = query.filter(
+                Appointment.end_time < current_time, Appointment.status == "Missed"
+            )
+        elif status == "Canceled":
+            query = query.filter(Appointment.status == "Canceled")
+        else:
+            return (
+                jsonify(
+                    {"error": "INVALID_STATUS", "message": "Invalid status provided."}
+                ),
+                400,
+            )
+
+    # Get all matching appointments
+    appointments = query.all()
+
+    if not appointments:
+        return (
+            jsonify(
+                {"error": "NO_APPOINTMENTS_FOUND", "message": "No appointments found."}
+            ),
+            404,
+        )
+
+    # Return the list of appointments
+    return jsonify([appointment.to_dict() for appointment in appointments]), 200
 
 
 @app_views.route("/create_appointment/<user_id>", methods=["POST"])
@@ -15,7 +101,7 @@ def create_appointment(user_id):
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
 
-    data = request.get_json()  # Get JSON data from the request body
+    data = request.get_json()
     if not data:
         return (
             jsonify(
@@ -24,112 +110,40 @@ def create_appointment(user_id):
             400,
         )
 
-    # Extract required fields from the JSON data
-    end_time = data.get("end_time")
     start_time = data.get("start_time")
+    end_time = data.get("end_time")
     description = data.get("description")
     doctor_id = data.get("doctor_id")
-    status = data.get("status")
-    # Validate required fields
 
-    if not start_time:
-        return (
-            jsonify({"error": "BAD_REQUEST", "message": "start date is required."}),
-            400,
-        )
-    if not end_time:
-        return (
-            jsonify({"error": "BAD_REQUEST", "message": "end time is required."}),
-            400,
-        )
-
-    try:
-        # Create a new Appointment object
-        appointment = Appointment(
-            userId=user_id,
-            description=description,
-            start_time=start_time,
-            end_time=end_time,
-            status=status,
-            doctor_id=doctor_id,
-        )
-
-        db.session.add(appointment)  # Add appointment to the session
-        db.session.commit()  # Commit the transaction
-
-        return jsonify(appointment.to_dict()), 201  # Return the created appointment
-    except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
-
-
-@app_views.route("/user_appointments/<user_id>", methods=["GET"])
-@jwt_required()
-def get_user_appointments(user_id):
-    """
-    Retrieve appointments for a specific user based on various filters and sorting parameters.
-    Parameters:
-    - user_id (str): The unique identifier of the user.
-    - limit (int, optional): Limit the number of appointments to retrieve.
-    - sort_by (str, optional): Field to sort the appointments by (default is "appointment_date").
-    - sort_order (str, optional): Sorting order, either "asc" or "desc" (default is "desc").
-    Returns:
-    - json: A list of dictionaries representing the retrieved appointments.
-    """
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
-
-    limit = request.args.get("limit", type=int)  # Get limit from query parameters
-    sort_by = request.args.get(
-        "sort_by", "appointment_date"
-    )  # Get sort_by from query parameters
-    sort_order = request.args.get(
-        "sort_order", "desc"
-    )  # Get sort_order from query parameters
-
-    query = Appointment.query.filter_by(userId=user_id)
-
-    # Sort the appointments by specified field and order
-    if sort_order == "asc":
-        query = query.order_by(asc(getattr(Appointment, sort_by, "appointment_date")))
-    else:
-        query = query.order_by(desc(getattr(Appointment, sort_by, "appointment_date")))
-
-    # Limit the number of results if specified
-    if limit:
-        query = query.limit(limit)
-
-    # Execute the query and fetch appointments
-    appointments = query.all()
-
-    # If no appointments are found, return a 404
-    if not appointments:
+    if not start_time or not end_time:
         return (
             jsonify(
-                {
-                    "error": "NO_APPOINTMENTS_FOUND",
-                    "message": "No appointments found for this user.",
-                }
+                {"error": "BAD_REQUEST", "message": "Start and end times are required."}
             ),
-            404,
+            400,
         )
 
-    # Return the appointments as a list of dictionaries
-    return jsonify([appointment.to_dict() for appointment in appointments]), 200
+    # Create a new Appointment object
+    try:
+        appointment = Appointment(
+            user_id=user_id,
+            description=description,
+            start_time=datetime.fromisoformat(start_time),
+            end_time=datetime.fromisoformat(end_time),
+            doctor_id=doctor_id,
+            status="Upcoming",
+        )
+        db.session.add(appointment)
+        db.session.commit()
+        return jsonify(appointment.to_dict()), 201
+    except Exception as e:
+        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
 @app_views.route("/update_appointment/<appointment_id>", methods=["PUT", "PATCH"])
 @jwt_required()
 def update_appointment(appointment_id):
-    """
-    Update an appointment based on the provided appointment ID.
-    Parameters:
-    - appointment_id (int): The ID of the appointment to be updated.
-    Returns:
-    - tuple: A tuple containing JSON response and status code.
-    """
     appointment = Appointment.query.get(appointment_id)
-
     if not appointment:
         return (
             jsonify(
@@ -138,8 +152,7 @@ def update_appointment(appointment_id):
             404,
         )
 
-    data = request.get_json()  # Get JSON data from the request body
-
+    data = request.get_json()
     if not data:
         return (
             jsonify(
@@ -148,14 +161,12 @@ def update_appointment(appointment_id):
             400,
         )
 
-    # Update fields that are present in the request
     appointment.start_time = data.get("start_time", appointment.start_time)
     appointment.end_time = data.get("end_time", appointment.end_time)
     appointment.description = data.get("description", appointment.description)
     appointment.doctor_id = data.get("doctor_id", appointment.doctor_id)
-    appointment.status = data.get("status", appointment.status)
+
     try:
-        # Commit changes to the database
         db.session.commit()
         return (
             jsonify(
@@ -173,18 +184,7 @@ def update_appointment(appointment_id):
 @app_views.route("/delete_appointment/<appointment_id>", methods=["DELETE"])
 @jwt_required()
 def delete_appointment(appointment_id):
-    """
-    Delete an appointment by ID.
-    Args:
-        appointment_id (str): The ID of the appointment to be deleted.
-    Returns:
-        dict: A JSON response indicating the result of the deletion process.
-              If successful, returns a message confirming the deletion.
-              If the appointment is not found, returns an error message.
-              If an internal server error occurs, returns an error message with details.
-    """
     appointment = Appointment.query.get(appointment_id)
-
     if not appointment:
         return (
             jsonify(
@@ -194,7 +194,6 @@ def delete_appointment(appointment_id):
         )
 
     try:
-        # Delete the appointment
         db.session.delete(appointment)
         db.session.commit()
         return (

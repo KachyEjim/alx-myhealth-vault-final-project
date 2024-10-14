@@ -20,6 +20,7 @@ flask-jwt-extended = "*"
 flask = "*"
 firebase-admin = "*"
 pillow = "*"
+apscheduler = "*"
 
 [dev-packages]
 

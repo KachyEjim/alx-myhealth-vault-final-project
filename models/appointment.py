@@ -10,7 +10,7 @@ class Appointment(BaseModel):
     end_time = db.Column(db.DateTime, nullable=False)
     doctor_id = db.Column(db.String(36), db.ForeignKey("doctors.id"), nullable=True)
     user_id = db.Column(db.String(36), db.ForeignKey("users.id"), nullable=True)
-    status = db.Column(db.String(50), nullable=False, default="Scheduled")
+    status = db.Column(db.String(50), nullable=False, default="Upcoming")
     description = db.Column(db.String(255), nullable=True)
 
     doctor = db.relationship("Doctor", back_populates="appointments")
