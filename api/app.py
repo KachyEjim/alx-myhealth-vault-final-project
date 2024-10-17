@@ -15,6 +15,7 @@ from flask_jwt_extended import (
     get_jwt,
 )
 from datetime import timedelta
+from models.medication import Medication
 from models.doctor import Doctor
 from flask_mail import Message
 from apscheduler.schedulers.background import BackgroundScheduler
