@@ -42,7 +42,8 @@ def add_token_to_blocklist(jti, expires_in):
     jwt_redis_blocklist.setex(jti, expires_in, "true")
 
 
-"""@app.before_request
+"""
+@app.before_request
 def before_request():
     for rule in app.url_map.iter_rules():
         print(f"Endpoint: {rule.endpoint}, Route: {rule.rule}")
@@ -173,6 +174,15 @@ def check_appointments():
 
         for appointment in appointments:
             user = User.query.get(appointment.user_id)
+            # If the appointment is about to start (within 30 minutes)
+            if now <= appointment.start_time <= now + timedelta(minutes=30):
+                if appointment.status == "Upcoming":
+                    appointment.status = "Notified"
+                    send_email(
+                        user.email,
+                        "Upcoming Appointment Reminder",
+                        f"Your appointment with {appointment.description} is scheduled to start at {appointment.start_time}.",
+                    )
 
             # If the appointment is ongoing and status is still 'Upcoming'
             if (

@@ -933,6 +933,362 @@ paths:
                     type: string
                   message:
                     type: string
+  /save-medications:
+    post:
+      tags:
+        - "Medications"
+      summary: "Save medications for a user"
+      description: |
+        Saves a list of medications provided as a list of dictionaries for the authenticated user. 
+        Each medication must include the 'name', 'when', and 'time' fields.
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: "List of medications to save."
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Aspirin"
+                  description: "Name of the medication."
+                when:
+                  type: string
+                  example: "2024-10-16"
+                  description: "Date when the medication should be taken."
+                time:
+                  type: string
+                  example: "08:00"
+                  description: "Time when the medication should be taken."
+      responses:
+        201:
+          description: "Medications saved successfully."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "SUCCESS"
+              medications:
+                type: array
+                items:
+                  $ref: "#/definitions/Medication"
+        400:
+          description: "Invalid input or missing fields."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INVALID_INPUT"
+              message:
+                type: string
+                example: "Medications should be provided as a list of dictionaries."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
+
+  /get-medications:
+    post:
+      tags:
+        - "Medications"
+      summary: "Retrieve medications for a user"
+      description: |
+        Retrieves medications based on provided filters. If no filters are provided, it returns all medications for the authenticated user.
+      parameters:
+        - in: body
+          name: body
+          required: false
+          description: "Filters for retrieving medications."
+          schema:
+            type: object
+            properties:
+              med_id:
+                type: string
+                example: "med-id-123"
+                description: "ID of the medication to fetch."
+              id:
+                type: integer
+                example: 1
+                description: "Specific medication ID to fetch."
+              name:
+                type: string
+                example: "Aspirin"
+                description: "Name of the medication to filter by."
+              dosage:
+                type: string
+                example: "500mg"
+                description: "Dosage of the medication to filter by."
+              status:
+                type: string
+                example: "active"
+                description: "Status of the medication."
+              created_at:
+                type: string
+                example: "2024-10-16 08:00:00"
+                description: "Creation timestamp for filtering."
+              updated_at:
+                type: string
+                example: "2024-10-16 09:00:00"
+                description: "Update timestamp for filtering."
+              when:
+                type: string
+                example: "08:00"
+                description: "Time for filtering medications."
+      responses:
+        200:
+          description: "Medications retrieved successfully."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "SUCCESS"
+              medications:
+                type: array
+                items:
+                  $ref: "#/definitions/Medication"
+        404:
+          description: "No medications found."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "NO_MEDICATIONS_FOUND"
+              message:
+                type: string
+                example: "No medications found."
+        400:
+          description: "Invalid datetime format."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INVALID_DATETIME_FORMAT"
+              message:
+                type: string
+                example: "Invalid format for created_at. Use YYYY-MM-DD HH:MM:SS."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
+
+  /medications:
+    get:
+      tags:
+        - "Medications"
+      summary: "Get all medications for a user"
+      description: |
+        Retrieves all medications associated with the authenticated user.
+      responses:
+        200:
+          description: "Medications retrieved successfully."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "SUCCESS"
+              medications:
+                type: array
+                items:
+                  $ref: "#/definitions/Medication"
+        404:
+          description: "No medications found."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "NO_MEDICATIONS_FOUND"
+              message:
+                type: string
+                example: "No medications found."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
+
+  /update-medications/{med_id}:
+    put:
+      tags:
+        - "Medications"
+      summary: "Update a specific medication"
+      description: |
+        Updates the details of a specific medication for the authenticated user based on the provided medication ID.
+      parameters:
+        - in: path
+          name: med_id
+          required: true
+          type: string
+          description: "ID of the medication to update."
+        - in: body
+          name: body
+          required: true
+          description: "Updated medication details."
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Aspirin"
+                description: "Updated name of the medication."
+              when:
+                type: string
+                example: "2024-10-16"
+                description: "Updated date for taking the medication."
+              time:
+                type: string
+                example: "09:00"
+                description: "Updated time for taking the medication."
+              status:
+                type: string
+                example: "active"
+                description: "Updated status of the medication."
+      responses:
+        200:
+          description: "Medication updated successfully."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "SUCCESS"
+              message:
+                type: string
+                example: "Medication updated successfully!"
+              medication:
+                $ref: "#/definitions/Medication"
+        404:
+          description: "Medication not found."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "MEDICATION_NOT_FOUND"
+              message:
+                type: string
+                example: "Medication not found."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
+
+  /delete-medications/{med_id}:
+    delete:
+      tags:
+        - "Medications"
+      summary: "Delete a specific medication"
+      description: |
+        Deletes a specific medication for the authenticated user based on the provided medication ID.
+      parameters:
+        - in: path
+          name: med_id
+          required: true
+          type: string
+          description: "ID of the medication to delete."
+      responses:
+        200:
+          description: "Medication deleted successfully."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "SUCCESS"
+              message:
+                type: string
+                example: "Medication deleted successfully!"
+        404:
+          description: "Medication not found."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "MEDICATION_NOT_FOUND"
+              message:
+                type: string
+                example: "Medication not found."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "ERROR"
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
 
 definitions:
   Appointment:
@@ -1041,6 +1397,37 @@ definitions:
         type: string
         description: "Name of the medical practitioner"
         example: "Dr. John Doe"
+  Medication:
+    type: object
+    properties:
+      med_id:
+        type: string
+        example: "med-id-123"
+        description: "ID of the medication."
+      name:
+        type: string
+        example: "Aspirin"
+        description: "Name of the medication."
+      when:
+        type: string
+        example: "2024-10-16"
+        description: "Date when the medication should be taken."
+      time:
+        type: string
+        example: "08:00"
+        description: "Time when the medication should be taken."
+      status:
+        type: string
+        example: "active"
+        description: "Status of the medication (upcoming/completed/missed)."
+      created_at:
+        type: string
+        example: "2024-10-16 08:00:00"
+        description: "Creation timestamp of the medication."
+      updated_at:
+        type: string
+        example: "2024-10-16 09:00:00"
+        description: "Update timestamp of the medication."
 
 securityDefinitions:
   jwt:

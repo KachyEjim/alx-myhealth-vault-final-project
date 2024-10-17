@@ -143,7 +143,6 @@ def profile_picture_upload(user_id):
 
     if request.method == "POST":
         try:
-            # Get the uploaded image
             if "image" not in request.files:
                 return (
                     jsonify(
@@ -185,9 +184,10 @@ def profile_picture_upload(user_id):
             # Verify the image using PIL
             try:
                 image = Image.open(img)
-                image.verify()
+                image.verify()  # Verify image integrity
                 img_format = image.format
-            except Exception:
+            except Exception as e:
+                print(f"Image verification failed: {str(e)}")  # Log the error
                 return (
                     jsonify(
                         {
@@ -216,10 +216,9 @@ def profile_picture_upload(user_id):
                 if not user:
                     raise Exception("User not found")
 
-                # Check if user has an existing profile picture and delete it
+                # Delete the existing profile picture if exists
                 if user.profile_picture:
                     try:
-                        # Delete the existing file from cloud storage
                         existing_blob = bucket.blob(
                             f"profile_pictures/{user_id}.{user.profile_picture.split('.')[-1]}"
                         )
@@ -229,8 +228,7 @@ def profile_picture_upload(user_id):
 
                 # Save the uploaded file temporarily
                 with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    for chunk in img.stream:
-                        temp_file.write(chunk)
+                    img.save(temp_file)  # Save the image directly
                     temp_file.flush()
 
                 # Upload new profile picture and update the user profile
@@ -251,7 +249,6 @@ def profile_picture_upload(user_id):
                     500,
                 )
             finally:
-                # Clean up the temporary file
                 if os.path.exists(temp_file.name):
                     os.remove(temp_file.name)
 

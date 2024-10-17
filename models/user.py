@@ -42,7 +42,12 @@ class User(BaseModel):
     last_login = db.Column(db.DateTime, nullable=True)
     role = db.Column(db.String(10), default="patient", nullable=True)
 
-    appointments = db.relationship("Appointment", back_populates="user")
+    appointments = db.relationship(
+        "Appointment", back_populates="user", cascade="all, delete-orphan", lazy=True
+    )
+    medications = db.relationship(
+        "Medication", back_populates="user", cascade="all, delete-orphan", lazy=True
+    )
 
     def __repr__(self):
         return f"<User {self.full_name} ({self.email})>"
