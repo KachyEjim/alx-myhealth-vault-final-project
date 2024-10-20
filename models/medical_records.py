@@ -33,18 +33,34 @@ class MedicalRecords(BaseModel):
     def to_dict(self):
         """Converts the medical record instance into a dictionary format"""
         return {
-            "id": self.get("id"),
-            "user_id": self.get("user_id"),
-            "record_name": self.get("record_name"),
-            "health_care_provider": self.get("health_care_provider"),
-            "type_of_record": self.get("type_of_record"),
-            "diagnosis": self.get("diagnosis"),
-            "notes": self.get("notes"),
-            "file_path": self.get("file_path"),
-            "status": self.get("status"),
-            "practitioner_name": self.get("practitioner_name"),
-            "last_added": self.get("last_added").isoformat(),
-            "last_updated": self.get("last_updated").isoformat(),
-            "created_at": self.get("created_at").isoformat(),
-            "updated_at": self.get("updated_at").isoformat(),
+            "id": getattr(self, "id", None),
+            "user_id": getattr(self, "user_id", None),
+            "record_name": getattr(self, "record_name", None),
+            "health_care_provider": getattr(self, "health_care_provider", None),
+            "type_of_record": getattr(self, "type_of_record", None),
+            "diagnosis": getattr(self, "diagnosis", None),
+            "notes": getattr(self, "notes", None),
+            "file_path": getattr(self, "file_path", None),
+            "status": getattr(self, "status", None),
+            "practitioner_name": getattr(self, "practitioner_name", None),
+            "last_added": (
+                getattr(self, "last_added", None).isoformat()
+                if self.last_added
+                else None
+            ),
+            "last_updated": (
+                getattr(self, "last_updated", None).isoformat()
+                if self.last_updated
+                else None
+            ),
+            "created_at": (
+                getattr(self, "created_at", None).isoformat()
+                if self.created_at
+                else None
+            ),
+            "updated_at": (
+                getattr(self, "updated_at", None).isoformat()
+                if self.updated_at
+                else None
+            ),
         }
