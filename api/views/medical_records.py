@@ -56,7 +56,7 @@ def create_record(user_id):
 
     try:
         medical_record = MedicalRecords(
-            userId=user_id,
+            user_id=user_id,
             record_name=record_name,
             health_care_provider=health_care_provider,
             type_of_record=type_of_record,
@@ -75,7 +75,7 @@ def create_record(user_id):
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
-@app_views.route("/user_records/<user_id>", methods=["GET"])
+@app_views.route("/get_user_records/<user_id>", methods=["GET"])
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
