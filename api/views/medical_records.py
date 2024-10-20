@@ -75,7 +75,7 @@ def create_record(user_id):
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
-@app_views.route("/get_user_records/<user_id>", methods=["GET"], strict_slashes=False)
+@app_views.route("/user_records/<user_id>", methods=["GET"], strict_slashes=False)
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
@@ -95,7 +95,7 @@ def get_user_medical_records(user_id):
     updated_start = request.args.get("updated_start")
     updated_end = request.args.get("updated_end")
 
-    query = MedicalRecords.query.filter_by(userId=user_id)
+    query = MedicalRecords.query.filter_by(user_id=user_id)
 
     if record_name:
         query = query.filter(MedicalRecords.record_name.ilike(f"%{record_name}%"))
