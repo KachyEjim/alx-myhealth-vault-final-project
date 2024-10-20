@@ -79,6 +79,8 @@ def create_record(user_id):
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
+    if user:
+        return get_jwt()
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
 
