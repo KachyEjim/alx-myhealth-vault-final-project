@@ -7,7 +7,7 @@ from sqlalchemy import asc, desc
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 
-@app_views.route("/create_record/<user_id>", methods=["POST"])
+@app_views.route("/create_record/<user_id>", methods=["POST"], strict_slashes=False)
 @jwt_required()
 def create_record(user_id):
     # Check if the user exists
@@ -75,7 +75,7 @@ def create_record(user_id):
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
-@app_views.route("/get_user_records/<user_id>", methods=["GET"])
+@app_views.route("/get_user_records/<user_id>", methods=["GET"], strict_slashes=False)
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
@@ -149,7 +149,9 @@ def get_user_medical_records(user_id):
     return jsonify([record.to_dict() for record in records]), 200
 
 
-@app_views.route("/update_record/<record_id>", methods=["PUT", "PATCH"])
+@app_views.route(
+    "/update_record/<record_id>", methods=["PUT", "PATCH"], strict_slashes=False
+)
 @jwt_required()
 def update_medical_record(record_id):
     medical_record = MedicalRecords.query.get(record_id)
@@ -203,7 +205,7 @@ def update_medical_record(record_id):
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
-@app_views.route("/delete_record/<record_id>", methods=["DELETE"])
+@app_views.route("/delete_record/<record_id>", methods=["DELETE"], strict_slashes=False)
 @jwt_required()
 def delete_medical_record(record_id):
     medical_record = MedicalRecords.query.get(record_id)
