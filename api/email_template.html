@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            background-color: #f8f8f8;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007BFF;
+        }
+        p {
+            line-height: 1.6;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #007BFF;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h1>{{ subject }}</h1>
+        <p>{{ body }}</p>
+
+        {% if action_url %}
+            <a href="{{ action_url }}" class="button">{{ action_text }}</a>
+        {% endif %}
+
+        <div class="footer">
+            <p>If you have any questions, feel free to reply to this email.</p>
+            <p>&copy; {{ current_year }} Your Company. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

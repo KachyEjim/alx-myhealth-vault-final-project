@@ -8,10 +8,11 @@ class Medication(BaseModel):
 
     __tablename__ = "medications"
 
-    med_id = db.Column(db.String(150), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     when = db.Column(db.String(50), nullable=False)
     time = db.Column(db.Time, nullable=False)
+    count = db.Colunm(db.Integer, nullable=False)
+    count_left = db.Colunm(db.Integer, nullable=True)
     status = db.Column(db.String(50), nullable=False, default="upcoming")
     user_id = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("User", back_populates="medications")
@@ -22,7 +23,6 @@ class Medication(BaseModel):
     def to_dict(self):
         return {
             "id": getattr(self, "id", None),
-            "med_id": getattr(self, "med_id", None),
             "status": getattr(self, "status", None),
             "name": getattr(self, "name", None),
             "when": getattr(self, "when", None),

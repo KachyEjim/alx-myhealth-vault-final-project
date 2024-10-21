@@ -153,11 +153,25 @@ stop_event = Event()
 
 
 # Function to send email
-def send_email(to, subject, body):
-    msg = Message(subject, recipients=[to])
-    msg.html = f"<h1>{subject}</h1><p>{body}</p>"
-    mail.send(msg)
+from flask import render_template
 
+def send_email(to, subject, body, template_name="email_template.html", **kwargs):
+    """
+    Send a dynamic email using a template.
+
+    :param to: Recipient's email address
+    :param subject: Subject of the email
+    :param body: Main body message of the email
+    :param template_name: Template file name for the email content
+    :param kwargs: Additional dynamic fields for the email template
+    """
+    msg = Message(subject, recipients=[to])
+    
+    # Render the HTML template with dynamic content
+    msg.html = render_template(template_name, subject=subject, body=body, **kwargs)
+    
+    # Send the email
+    mail.send(msg)
 
 # Function to update appointment statuses and send notifications
 def check_appointments():
@@ -188,9 +202,9 @@ def check_appointments():
             # If the appointment is ongoing and status is still 'Upcoming'
             if (
                 appointment.start_time <= now <= appointment.end_time
-                and appointment.status == "Upcoming"
+                and appointment.status == "Notified"
             ):
-                appointment.status = "Ongoing"
+
                 send_email(
                     user.email,
                     "Your Appointment is Ongoing",
@@ -207,7 +221,7 @@ def check_appointments():
                 )
 
             # If the user missed the appointment
-            elif now > appointment.end_time and appointment.status == "Upcoming":
+            elif now > appointment.end_time and appointment.status == "Notified":
                 appointment.status = "Missed"
                 send_email(
                     user.email,

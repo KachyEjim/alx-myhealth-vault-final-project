@@ -13,54 +13,39 @@ def save_medications():
     try:
         data = request.get_json()
 
-        if not isinstance(data, list):
+        user_id = get_jwt_identity()
+        # Extract the fields from each dictionary
+        name = data.get("name")
+        when = data.get("when")
+        time = data.get("time")
+        count = data.get("count")
+        if not all([name, when, time, count]):
             return (
                 jsonify(
                     {
                         "status": "ERROR",
-                        "error": "INVALID_INPUT",
-                        "message": "Medications should be provided as a list of dictionaries.",
+                        "error": "MISSING_FIELDS",
+                        "message": "Each medication must have 'name', 'when', and 'time'.",
                     }
                 ),
                 400,
             )
 
-        user_id = get_jwt_identity()
-        saved_medications = []
-        med_id = str(uuid.uuid4())
-        for med_data in data:
-            # Extract the fields from each dictionary
-            name = med_data.get("name")
-            when = med_data.get("when")
-            time = med_data.get("time")
+        # Create a new Medication object
+        new_medication = Medication(
+            name=name,
+            when=when,
+            time=time,
+            count=count,
+            user_id=user_id,
+            count_left=count,
+        )
 
-            if not all([name, when, time]):
-                return (
-                    jsonify(
-                        {
-                            "status": "ERROR",
-                            "error": "MISSING_FIELDS",
-                            "message": "Each medication must have 'name', 'when', and 'time'.",
-                        }
-                    ),
-                    400,
-                )
-
-            # Create a new Medication object
-            new_medication = Medication(
-                med_id=med_id,
-                name=name,
-                when=when,
-                time=time,
-                user_id=user_id,
-            )
-
-            db.session.add(new_medication)
-            saved_medications.append(new_medication.to_dict())
+        db.session.add(new_medication)
 
         db.session.commit()
 
-        return jsonify({"status": "SUCCESS", "medications": saved_medications}), 201
+        return jsonify({"status": "SUCCESS", "medications": new_medication}), 201
 
     except Exception as e:
         return (
@@ -81,14 +66,15 @@ def get_medications():
         data = request.get_json()
 
         # Extract parameters from the JSON data
-        med_id = data.get("med_id")
         id = data.get("id")
+        time = data.get("time")
         name = data.get("name")
-        dosage = data.get("dosage")
         status = data.get("status")
         created_at = data.get("created_at")
         updated_at = data.get("updated_at")
         when = data.get("when")
+        count = data.get("count")
+        count_left = data.get("count_left")
 
         # If an ID is provided, fetch the specific medication
         if id:
@@ -112,12 +98,12 @@ def get_medications():
 
         query = Medication.query.filter_by(user_id=user_id)
 
-        if med_id:
-            query = query.filter_by(med_id=med_id)
+        if count:
+            query = query.filter_by(count=count)
         if name:
             query = query.filter(Medication.name.ilike(f"%{name}%"))
-        if dosage:
-            query = query.filter_by(dosage=dosage)
+        if count_left:
+            query = query.filter_by(count_left=count_left)
         if status:
             query = query.filter_by(status=status)
 
@@ -153,14 +139,12 @@ def get_medications():
                     400,
                 )
 
-        if when:
+        if time:
             try:
                 when_time = datetime.strptime(
-                    when, "%H:%M"
+                    time, "%H:%M"
                 ).time()  # Parse time as HH:MM
-                query = query.filter(
-                    Medication.when == when_time
-                )  # Assuming Medication.when is a TIME field
+                query = query.filter(Medication.time == when_time)
             except ValueError:
                 return (
                     jsonify(
@@ -172,46 +156,10 @@ def get_medications():
                     ),
                     400,
                 )
+        if when:
+            query = query.filter_by(when=when)
 
         medications = query.all()
-
-        if not medications:
-            return (
-                jsonify(
-                    {
-                        "status": "ERROR",
-                        "error": "NO_MEDICATIONS_FOUND",
-                        "message": "No medications found.",
-                    }
-                ),
-                404,
-            )
-
-        return (
-            jsonify(
-                {
-                    "status": "SUCCESS",
-                    "medications": [med.to_dict() for med in medications],
-                }
-            ),
-            200,
-        )
-
-    except Exception as e:
-        return (
-            jsonify(
-                {"status": "ERROR", "error": "INTERNAL_SERVER_ERROR", "message": str(e)}
-            ),
-            500,
-        )
-
-
-@app_views.route("/medications", methods=["GET"], strict_slashes=False)
-@jwt_required()
-def get_medications():
-    try:
-        user_id = get_jwt_identity()
-        medications = Medication.query.filter_by(user_id=user_id).all()
 
         if not medications:
             return (
@@ -270,7 +218,7 @@ def update_medication(med_id):
         medication.when = data.get("when", medication.when)
         medication.time = data.get("time", medication.time)
         medication.status = data.get("status", medication.status)
-
+        medication.count = data.get("count", medication.count)
         db.session.commit()
 
         return (

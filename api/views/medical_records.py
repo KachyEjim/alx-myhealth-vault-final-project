@@ -14,47 +14,53 @@ def create_record(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
-
-    data = request.get_json()
-    if not data:
-        return (
-            jsonify(
-                {"error": "NO_INPUT_DATA_FOUND", "message": "No input data found."}
-            ),
-            400,
-        )
-
-    record_name = data.get("record_name")
-    health_care_provider = data.get("health_care_provider")
-    type_of_record = data.get("type_of_record")
-
-    # Validate required fields
-    if not record_name:
-        return (
-            jsonify({"error": "BAD_REQUEST", "message": "Record name is required."}),
-            400,
-        )
-    if not health_care_provider:
-        return (
-            jsonify(
-                {"error": "BAD_REQUEST", "message": "Health care provider is required."}
-            ),
-            400,
-        )
-    if not type_of_record:
-        return (
-            jsonify({"error": "BAD_REQUEST", "message": "Type of record is required."}),
-            400,
-        )
-
-    # Optional fields
-    diagnosis = data.get("diagnosis")
-    notes = data.get("notes")
-    file_path = data.get("file_path")
-    status = data.get("status", "draft")
-    practitioner_name = data.get("practitioner_name")
-
     try:
+        data = request.get_json()
+        if not data:
+            return (
+                jsonify(
+                    {"error": "NO_INPUT_DATA_FOUND", "message": "No input data found."}
+                ),
+                400,
+            )
+
+        record_name = data.get("record_name")
+        health_care_provider = data.get("health_care_provider")
+        type_of_record = data.get("type_of_record")
+
+        # Validate required fields
+        if not record_name:
+            return (
+                jsonify(
+                    {"error": "BAD_REQUEST", "message": "Record name is required."}
+                ),
+                400,
+            )
+        if not health_care_provider:
+            return (
+                jsonify(
+                    {
+                        "error": "BAD_REQUEST",
+                        "message": "Health care provider is required.",
+                    }
+                ),
+                400,
+            )
+        if not type_of_record:
+            return (
+                jsonify(
+                    {"error": "BAD_REQUEST", "message": "Type of record is required."}
+                ),
+                400,
+            )
+
+        # Optional fields
+        diagnosis = data.get("diagnosis")
+        notes = data.get("notes")
+        file_path = data.get("file_path")
+        status = data.get("status", "draft")
+        practitioner_name = data.get("practitioner_name")
+
         medical_record = MedicalRecords(
             user_id=user_id,
             record_name=record_name,
@@ -79,76 +85,93 @@ def create_record(user_id):
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
-    if user:
-        return get_jwt()
+
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+    try:
+        data = request.get_json()
+        id = data.get("id")
+        if id:
+            record = MedicalRecords.query.filter_by(id=id).first()
+            if not record:
+                return (
+                    jsonify(
+                        {
+                            "error": "NO_RECORDS_FOUND",
+                            "message": "No medical records found for this user.",
+                        }
+                    ),
+                    404,
+                )
 
-    limit = request.args.get("limit", type=int)
-    sort_by = request.args.get("sort_by", "last_added")
-    sort_order = request.args.get("sort_order", "desc")
-    record_name = request.args.get("record_name")
-    type_of_record = request.args.get("type_of_record")
-    diagnosis = request.args.get("diagnosis")
-    start_date = request.args.get("start_date")
-    end_date = request.args.get("end_date")
-    created_start = request.args.get("created_start")
-    created_end = request.args.get("created_end")
-    updated_start = request.args.get("updated_start")
-    updated_end = request.args.get("updated_end")
+            return jsonify(record.to_dict()), 200
+        limit = data.get("limit", type=int)
+        sort_by = data.get("sort_by", "last_added")
+        sort_order = data.get("sort_order", "desc")
+        record_name = data.get("record_name")
+        type_of_record = data.get("type_of_record")
+        diagnosis = data.get("diagnosis")
+        start_date = data.get("start_date")
+        end_date = data.get("end_date")
+        created_start = data.get("created_start")
+        created_end = data.get("created_end")
+        updated_start = data.get("updated_start")
+        updated_end = data.get("updated_end")
 
-    query = MedicalRecords.query.filter_by(user_id=user_id)
+        query = MedicalRecords.query.filter_by(user_id=user_id)
 
-    if record_name:
-        query = query.filter(MedicalRecords.record_name.ilike(f"%{record_name}%"))
-    if type_of_record:
-        query = query.filter_by(type_of_record=type_of_record)
-    if diagnosis:
-        query = query.filter(MedicalRecords.diagnosis.ilike(f"%{diagnosis}%"))
+        if record_name:
+            query = query.filter(MedicalRecords.record_name.ilike(f"%{record_name}%"))
+        if type_of_record:
+            query = query.filter_by(type_of_record=type_of_record)
+        if diagnosis:
+            query = query.filter(MedicalRecords.diagnosis.ilike(f"%{diagnosis}%"))
 
-    # Filter by last_added date range
-    if start_date:
-        query = query.filter(MedicalRecords.last_added >= start_date)
-    if end_date:
-        query = query.filter(MedicalRecords.last_added <= end_date)
+        # Filter by last_added date range
+        if start_date:
+            query = query.filter(MedicalRecords.last_added >= start_date)
+        if end_date:
+            query = query.filter(MedicalRecords.last_added <= end_date)
 
-    # Filter by created_at date range
-    if created_start:
-        query = query.filter(MedicalRecords.created_at >= created_start)
-    if created_end:
-        query = query.filter(MedicalRecords.created_at <= created_end)
+        # Filter by created_at date range
+        if created_start:
+            query = query.filter(MedicalRecords.created_at >= created_start)
+        if created_end:
+            query = query.filter(MedicalRecords.created_at <= created_end)
 
-    # Filter by updated_at date range
-    if updated_start:
-        query = query.filter(MedicalRecords.updated_at >= updated_start)
-    if updated_end:
-        query = query.filter(MedicalRecords.updated_at <= updated_end)
+        # Filter by updated_at date range
+        if updated_start:
+            query = query.filter(MedicalRecords.updated_at >= updated_start)
+        if updated_end:
+            query = query.filter(MedicalRecords.updated_at <= updated_end)
 
-    # Sort the records by specified field and order
-    if sort_order == "asc":
-        query = query.order_by(asc(getattr(MedicalRecords, sort_by, "last_added")))
-    else:
-        query = query.order_by(desc(getattr(MedicalRecords, sort_by, "last_added")))
+        # Sort the records by specified field and order
+        if sort_order == "asc":
+            query = query.order_by(asc(getattr(MedicalRecords, sort_by, "last_added")))
+        else:
+            query = query.order_by(desc(getattr(MedicalRecords, sort_by, "last_added")))
 
-    # Limit the number of results if specified
-    if limit:
-        query = query.limit(limit)
+        # Limit the number of results if specified
+        if limit:
+            query = query.limit(limit)
 
-    # Execute the query and fetch records
-    records = query.all()
+        # Execute the query and fetch records
+        records = query.all()
 
-    if not records:
-        return (
-            jsonify(
-                {
-                    "error": "NO_RECORDS_FOUND",
-                    "message": "No medical records found for this user.",
-                }
-            ),
-            404,
-        )
+        if not records:
+            return (
+                jsonify(
+                    {
+                        "error": "NO_RECORDS_FOUND",
+                        "message": "No medical records found for this user.",
+                    }
+                ),
+                404,
+            )
 
-    return jsonify([record.to_dict() for record in records]), 200
+        return jsonify([record.to_dict() for record in records]), 200
+    except Exception as e:
+        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
 @app_views.route(
@@ -165,44 +188,49 @@ def update_medical_record(record_id):
             ),
             404,
         )
-
-    data = request.get_json()
-
-    if not data:
-        return (
-            jsonify(
-                {"error": "NO_INPUT_DATA_FOUND", "message": "No input data provided."}
-            ),
-            400,
-        )
-
-    # Update fields that are present in the request
-    medical_record.record_name = data.get("record_name", medical_record.record_name)
-    medical_record.health_care_provider = data.get(
-        "health_care_provider", medical_record.health_care_provider
-    )
-    medical_record.type_of_record = data.get(
-        "type_of_record", medical_record.type_of_record
-    )
-    medical_record.diagnosis = data.get("diagnosis", medical_record.diagnosis)
-    medical_record.notes = data.get("notes", medical_record.notes)
-    medical_record.file_path = data.get("file_path", medical_record.file_path)
-    medical_record.status = data.get("status", medical_record.status)
-    medical_record.practitioner_name = data.get(
-        "practitioner_name", medical_record.practitioner_name
-    )
-
     try:
-        db.session.commit()
-        return (
-            jsonify(
-                {
-                    "message": "Medical record updated successfully",
-                    "record": medical_record.to_dict(),
-                }
-            ),
-            200,
+        data = request.get_json()
+
+        if not data:
+            return (
+                jsonify(
+                    {
+                        "error": "NO_INPUT_DATA_FOUND",
+                        "message": "No input data provided.",
+                    }
+                ),
+                400,
+            )
+
+        # Update fields that are present in the request
+        medical_record.record_name = data.get("record_name", medical_record.record_name)
+        medical_record.health_care_provider = data.get(
+            "health_care_provider", medical_record.health_care_provider
         )
+        medical_record.type_of_record = data.get(
+            "type_of_record", medical_record.type_of_record
+        )
+        medical_record.diagnosis = data.get("diagnosis", medical_record.diagnosis)
+        medical_record.notes = data.get("notes", medical_record.notes)
+        medical_record.file_path = data.get("file_path", medical_record.file_path)
+        medical_record.status = data.get("status", medical_record.status)
+        medical_record.practitioner_name = data.get(
+            "practitioner_name", medical_record.practitioner_name
+        )
+
+        try:
+            db.session.commit()
+            return (
+                jsonify(
+                    {
+                        "message": "Medical record updated successfully",
+                        "record": medical_record.to_dict(),
+                    }
+                ),
+                200,
+            )
+        except Exception as e:
+            return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 

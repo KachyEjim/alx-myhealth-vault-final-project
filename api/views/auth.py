@@ -366,3 +366,5 @@ def refresh():
     new_access_token = create_access_token(identity=current_user)
 
     return jsonify(access_token=new_access_token)
+
+

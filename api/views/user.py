@@ -88,14 +88,14 @@ def update_user(user_id):
 @app_views.route("/delete_user/<user_id>", methods=["DELETE"], strict_slashes=False)
 @jwt_required()
 def delete_user(user_id):
-    current_user_id = get_jwt_identity()
+    data = get_jwt()
 
-    if current_user_id != user_id:
+    if data["role"] != "SuperAdmin":
         return (
             jsonify(
                 {
                     "error": "UNAUTHORIZED",
-                    "message": "You can only delete your own account.",
+                    "message": "You are not authorized to delete this account.",
                 }
             ),
             403,
