@@ -105,7 +105,8 @@ def get_user_medical_records(user_id):
                 )
 
             return jsonify(record.to_dict()), 200
-        limit = data.get("limit", type=int)
+
+        limit = int(data.get("limit")) if data.get("limit") else None
         sort_by = data.get("sort_by", "last_added")
         sort_order = data.get("sort_order", "desc")
         record_name = data.get("record_name")
