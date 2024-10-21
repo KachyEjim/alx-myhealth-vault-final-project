@@ -88,12 +88,20 @@ def get_user_medical_records(user_id):
 
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+
     try:
-        if request.content_type != "application/json":
+        # Check if the content type is JSON and get the JSON data
+        if request.content_type == "application/json":
+            data = request.get_json()
+        else:
+            data = None  # No JSON provided
+
+        # If JSON data is not present, return all records
+        if data is None:
             records = MedicalRecords.query.filter_by(user_id=user_id).all()
             return jsonify([record.to_dict() for record in records]), 200
 
-        data = request.get_json()
+        # Process the incoming JSON data
         id = data.get("id")
         if id:
             record = MedicalRecords.query.filter_by(id=id).first()
