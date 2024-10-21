@@ -89,6 +89,10 @@ def get_user_medical_records(user_id):
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
     try:
+        if request.content_type != "application/json":
+            records = MedicalRecords.query.filter_by(user_id=user_id).all()
+            return jsonify([record.to_dict() for record in records]), 200
+
         data = request.get_json()
         id = data.get("id")
         if id:
