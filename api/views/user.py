@@ -8,9 +8,7 @@ from PIL import Image
 import os
 import tempfile
 from api.config import bucket
-
-
-# Allowed image extensions
+from api.views.routes import upload_file, allowed_file, IMAGE_EXTENSIONS
 
 
 @app_views.route("/user", methods=["GET"], strict_slashes=False)
@@ -30,21 +28,49 @@ def get_user():
                 jsonify(
                     {
                         "error": "MISSING_CRITERIA",
-                        "message": "Please provide a valid ID or email.",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "Please provide a valid ID or email.",
                     }
                 ),
                 400,
             )
 
         if user:
-            return jsonify({"user": user.to_dict()}), 200
+            return (
+                jsonify(
+                    {
+                        "status": True,
+                        "statusCode": 200,
+                        "data": user.to_dict(),
+                    }
+                ),
+                200,
+            )
         else:
             return (
-                jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}),
+                jsonify(
+                    {
+                        "error": "USER_NOT_FOUND",
+                        "status": False,
+                        "statusCode": 404,
+                        "msg": "User not found.",
+                    }
+                ),
                 404,
             )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": str(e),
+                }
+            ),
+            500,
+        )
 
 
 @app_views.route("/update_user/<user_id>", methods=["PUT"], strict_slashes=False)
@@ -57,7 +83,9 @@ def update_user(user_id):
             jsonify(
                 {
                     "error": "UNAUTHORIZED",
-                    "message": "You can only update your own information.",
+                    "status": False,
+                    "statusCode": 403,
+                    "msg": "You can only update your own information.",
                 }
             ),
             403,
@@ -65,7 +93,17 @@ def update_user(user_id):
 
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+        return (
+            jsonify(
+                {
+                    "error": "USER_NOT_FOUND",
+                    "status": False,
+                    "statusCode": 404,
+                    "msg": "User not found.",
+                }
+            ),
+            404,
+        )
     try:
         data = request.get_json()
 
@@ -77,11 +115,28 @@ def update_user(user_id):
 
         db.session.commit()
         return (
-            jsonify({"message": "User updated successfully!", "user": user.to_dict()}),
+            jsonify(
+                {
+                    "status": True,
+                    "statusCode": 200,
+                    "msg": "User updated successfully!",
+                    "data": user.to_dict(),
+                }
+            ),
             200,
         )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": str(e),
+                }
+            ),
+            500,
+        )
 
 
 @app_views.route("/delete_user/<user_id>", methods=["DELETE"], strict_slashes=False)
@@ -94,7 +149,9 @@ def delete_user(user_id):
             jsonify(
                 {
                     "error": "UNAUTHORIZED",
-                    "message": "You are not authorized to delete this account.",
+                    "status": False,
+                    "statusCode": 403,
+                    "msg": "You are not authorized to delete this account.",
                 }
             ),
             403,
@@ -103,7 +160,17 @@ def delete_user(user_id):
     user = User.query.get(user_id)
 
     if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+        return (
+            jsonify(
+                {
+                    "error": "USER_NOT_FOUND",
+                    "status": False,
+                    "statusCode": 404,
+                    "msg": "User not found.",
+                }
+            ),
+            404,
+        )
 
     try:
         db.session.delete(user)
@@ -113,16 +180,29 @@ def delete_user(user_id):
         from api.app import add_token_to_blocklist
 
         add_token_to_blocklist(jti, expires_in)
-        return jsonify({"message": f"User {user_id} successfully deleted!"}), 200
+        return (
+            jsonify(
+                {
+                    "status": True,
+                    "statusCode": 200,
+                    "msg": f"User {user_id} successfully deleted!",
+                    "data": user_id,
+                }
+            ),
+            200,
+        )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
-
-
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "txt", "docx", "webp"}
-
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": str(e),
+                }
+            ),
+            500,
+        )
 
 
 @app_views.route(
@@ -137,7 +217,9 @@ def profile_picture_upload(user_id):
             jsonify(
                 {
                     "error": "UNAUTHORIZED",
-                    "message": "You can only upload a profile picture to your own account.",
+                    "status": False,
+                    "statusCode": 403,
+                    "msg": "You can only upload a profile picture to your own account.",
                 }
             ),
             403,
@@ -149,9 +231,10 @@ def profile_picture_upload(user_id):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 400,
                             "error": "NO_FILE_UPLOADED",
-                            "message": "No file was uploaded.",
+                            "msg": "No file was uploaded.",
                         }
                     ),
                     400,
@@ -163,21 +246,23 @@ def profile_picture_upload(user_id):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 400,
                             "error": "NO_FILE_UPLOADED",
-                            "message": "No file was selected.",
+                            "msg": "No file was selected.",
                         }
                     ),
                     400,
                 )
 
-            if not allowed_file(img.filename):
+            if not allowed_file(img.filename, IMAGE_EXTENSIONS):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 400,
                             "error": "INVALID_FILE_TYPE",
-                            "message": "Invalid file type.",
+                            "msg": "Invalid file type.",
                         }
                     ),
                     400,
@@ -193,9 +278,10 @@ def profile_picture_upload(user_id):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 400,
                             "error": "INVALID_IMAGE_FILE",
-                            "message": "The uploaded file is not a valid image.",
+                            "msg": "The uploaded file is not a valid image.",
                         }
                     ),
                     400,
@@ -205,9 +291,10 @@ def profile_picture_upload(user_id):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 400,
                             "error": "FILE_TOO_LARGE",
-                            "message": "File size exceeds 10MB limit.",
+                            "msg": "File size exceeds 10MB limit.",
                         }
                     ),
                     400,
@@ -228,11 +315,11 @@ def profile_picture_upload(user_id):
                     except Exception as e:
                         print(f"Error deleting existing profile picture: {e}")
 
+                image_file = request.files[image]
                 # Save the uploaded file temporarily
-                from api.views.routes import upload_file
-
                 image_url = upload_file(
-                    f"profile_pictures/{user.id}", request, img_format
+                    f"profile_pictures/{user.id}.{img_format}",
+                    image_file,
                 )
                 user.profile_picture = image_url
                 db.session.add(user)
@@ -242,9 +329,10 @@ def profile_picture_upload(user_id):
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 500,
                             "error": "UPLOAD_ERROR",
-                            "message": f"Error uploading image or updating user: {str(e)}",
+                            "msg": f"Error uploading image or updating user: {str(e)}",
                         }
                     ),
                     500,
@@ -255,9 +343,8 @@ def profile_picture_upload(user_id):
                     {
                         "status": True,
                         "statusCode": 200,
-                        "success": "IMAGE_UPLOADED",
-                        "msg": f"Image uploaded successfully.",
-                        "image_url": image_url,
+                        "msg": "Image uploaded successfully.",
+                        "data": image_url,
                     }
                 ),
                 200,
@@ -267,9 +354,10 @@ def profile_picture_upload(user_id):
             return (
                 jsonify(
                     {
-                        "status": "ERROR",
+                        "status": False,
+                        "statusCode": 500,
                         "error": "INTERNAL_SERVER_ERROR",
-                        "message": f"An unexpected error occurred: {str(e)}",
+                        "msg": f"An unexpected error occurred: {str(e)}",
                     }
                 ),
                 500,
@@ -278,9 +366,10 @@ def profile_picture_upload(user_id):
     return (
         jsonify(
             {
-                "status": "ERROR",
+                "status": False,
+                "statusCode": 405,
                 "error": "INVALID_REQUEST_METHOD",
-                "message": "Invalid request method.",
+                "msg": "Invalid request method.",
             }
         ),
         405,

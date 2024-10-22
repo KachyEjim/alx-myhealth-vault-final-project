@@ -5,20 +5,82 @@ from api.config import bucket
 
 # Firebase initialization
 # Allowed file extensions for security purposes
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "txt", "docx"}
+ALLOWED_EXTENSIONS = {
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "pdf",
+    "txt",
+    "docx",
+    "doc",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
+    "csv",
+    "mp3",
+    "wav",
+    "mp4",
+    "mov",
+    "avi",
+    "mpeg",
+    "zip",
+    "rar",
+    "7z",
+    "tar",
+    "bmp",
+    "svg",
+    "tiff",
+    "html",
+    "css",
+    "js",
+    "json",
+    "xml",
+    "yaml",
+    "yml",
+}
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "bmp", "svg", "tiff"}
+DOCUMENT_EXTENSIONS = {
+    "pdf",
+    "txt",
+    "docx",
+    "doc",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
+    "csv",
+}
+MEDIA_EXTENSIONS = {"mp3", "wav", "mp4", "mov", "avi", "mpeg"}
+COMPRESSED_EXTENSIONS = {"zip", "rar", "7z", "tar"}
+CODE_EXTENSIONS = {"html", "css", "js", "json", "xml", "yaml", "yml"}
 
 
-def allowed_file(filename):
+def allowed_file(filename, otherExtensions1=None, otherExtensions2=None):
+    if otherExtensions1:
+        if "." in filename and filename.rsplit(".", 1)[1].lower() in otherExtensions1:
+            return True
+        if otherExtensions2:
+            if (
+                "." in filename
+                and filename.rsplit(".", 1)[1].lower() in otherExtensions2
+            ):
+                return True
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # File upload route
-def upload_file(file_name, request, img_format=None):
+def upload_file(file_name, file):
     # Check if the file part is in the request
 
-    print("File part found in the request.")
 
-    file = request.files["file"]
 
     if file.filename == "":
         raise Exception("Filename is empty")
@@ -28,26 +90,19 @@ def upload_file(file_name, request, img_format=None):
     if not allowed_file(file.filename):
         raise Exception("File format not allowed")
 
-    print("File format is allowed.")
 
     # Extract the file extension
-    file_extension = file.filename.rsplit(".", 1)[1].lower()
-    new_filename = f"{file_name}.{file_extension}"
 
-    print(f"New filename: {new_filename}")
 
     try:
         file.seek(0)
-        blob = bucket.blob(new_filename)
+        blob = bucket.blob(file_name)
 
         # Use the upload_from_file method correctly
         blob.upload_from_file(file)
-        print("File uploaded successfully.")
 
         blob.make_public()
-        print("Blob made public.")
 
         return blob.public_url
     except Exception as e:
-        print(f"Error uploading file: {str(e)}")
-        raise
+        raise Exception(f"Error uploading file: {str(e)}")

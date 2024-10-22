@@ -1,6 +1,7 @@
 from datetime import datetime
 from models.base_model import BaseModel
 from api import db
+import json
 
 
 class MedicalRecords(BaseModel):
@@ -16,7 +17,7 @@ class MedicalRecords(BaseModel):
     type_of_record = db.Column(db.String(70), nullable=False)
     diagnosis = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    file_path = db.Column(db.String(255), nullable=True)
+    file_paths = db.Column(db.Text, nullable=True)  # Storing as JSON
     status = db.Column(db.String(20), nullable=True, default="draft")
     practitioner_name = db.Column(db.String(100), nullable=True)
     last_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -30,6 +31,12 @@ class MedicalRecords(BaseModel):
         """String Representation showing record name and diagnosis"""
         return f"<MedicalRecord {self.record_name} ({self.diagnosis})>"
 
+    def set_file_paths(self, paths):
+        self.file_paths = json.dumps(paths)  # Store as JSON string
+
+    def get_file_paths(self):
+        return json.loads(self.file_paths) if self.file_paths else []
+
     def to_dict(self):
         """Converts the medical record instance into a dictionary format"""
         return {
@@ -40,7 +47,7 @@ class MedicalRecords(BaseModel):
             "type_of_record": getattr(self, "type_of_record", None),
             "diagnosis": getattr(self, "diagnosis", None),
             "notes": getattr(self, "notes", None),
-            "file_path": getattr(self, "file_path", None),
+            "file_path": getattr(self, "file_paths", None),
             "status": getattr(self, "status", None),
             "practitioner_name": getattr(self, "practitioner_name", None),
             "last_added": (

@@ -5,6 +5,14 @@ from models.user import User
 from models.medical_records import MedicalRecords
 from sqlalchemy import asc, desc
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from api.views.routes import (
+    upload_file,
+    allowed_file,
+    ALLOWED_EXTENSIONS,
+    DOCUMENT_EXTENSIONS,
+    COMPRESSED_EXTENSIONS,
+)
+from werkzeug.utils import secure_filename
 
 
 @app_views.route("/create_record/<user_id>", methods=["POST"], strict_slashes=False)
@@ -13,17 +21,36 @@ def create_record(user_id):
     # Check if the user exists
     user = User.query.get(user_id)
     if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+        return (
+            jsonify(
+                {
+                    "error": "USER_NOT_FOUND",
+                    "status": False,
+                    "statusCode": 404,
+                    "msg": "User not found.",
+                }
+            ),
+            404,
+        )
+
     try:
-        data = request.get_json()
+        data = request.form
+
+        # Check if the input data exists
         if not data:
             return (
                 jsonify(
-                    {"error": "NO_INPUT_DATA_FOUND", "message": "No input data found."}
+                    {
+                        "error": "NO_INPUT_DATA_FOUND",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "No input data found.",
+                    }
                 ),
                 400,
             )
 
+        # Extract fields
         record_name = data.get("record_name")
         health_care_provider = data.get("health_care_provider")
         type_of_record = data.get("type_of_record")
@@ -32,24 +59,38 @@ def create_record(user_id):
         if not record_name:
             return (
                 jsonify(
-                    {"error": "BAD_REQUEST", "message": "Record name is required."}
+                    {
+                        "error": "BAD_REQUEST",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "Record name is required.",
+                    }
                 ),
                 400,
             )
+
         if not health_care_provider:
             return (
                 jsonify(
                     {
                         "error": "BAD_REQUEST",
-                        "message": "Health care provider is required.",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "Health care provider is required.",
                     }
                 ),
                 400,
             )
+
         if not type_of_record:
             return (
                 jsonify(
-                    {"error": "BAD_REQUEST", "message": "Type of record is required."}
+                    {
+                        "error": "BAD_REQUEST",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "Type of record is required.",
+                    }
                 ),
                 400,
             )
@@ -57,10 +98,10 @@ def create_record(user_id):
         # Optional fields
         diagnosis = data.get("diagnosis")
         notes = data.get("notes")
-        file_path = data.get("file_path")
         status = data.get("status", "draft")
         practitioner_name = data.get("practitioner_name")
 
+        # Create medical record
         medical_record = MedicalRecords(
             user_id=user_id,
             record_name=record_name,
@@ -68,14 +109,71 @@ def create_record(user_id):
             type_of_record=type_of_record,
             diagnosis=diagnosis,
             notes=notes,
-            file_path=file_path,
             status=status,
             practitioner_name=practitioner_name,
         )
 
+        print(medical_record)
+
+        # Handle file upload (if any)
+        files = request.files
+        if not files:
+            return (
+                jsonify(
+                    {
+                        "error": "NO_FILES_UPLOADED",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "No files were uploaded.",
+                    }
+                ),
+                400,
+            )
+        list_files = []
+        for file in files.values():
+            if file:
+                if not allowed_file(
+                    file.filename, DOCUMENT_EXTENSIONS, COMPRESSED_EXTENSIONS
+                ):
+                    return (
+                        jsonify(
+                            {
+                                "error": "INVALID_FILE_FORMAT",
+                                "status": False,
+                                "statusCode": 400,
+                                "msg": f"File format not allowed. Allowed types: {', '.join(DOCUMENT_EXTENSIONS)}{', '.join(COMPRESSED_EXTENSIONS)}",
+                            }
+                        ),
+                        400,
+                    )
+
+                # Upload the file securely
+                print(medical_record.id)
+                new_filename = f"medicalFiles/{user_id}/{medical_record.id}/{secure_filename(file.filename)}"
+                try:
+                    file_path = upload_file(
+                        new_filename, file
+                    )  # Assuming upload_file returns the file URL/path
+                    list_files.append(file_path)
+                    print(file_path)
+                except Exception as e:
+                    return (
+                        jsonify(
+                            {
+                                "error": "FILE_UPLOAD_ERROR",
+                                "status": False,
+                                "statusCode": 500,
+                                "msg": f"File upload failed: {str(e)}",
+                            }
+                        ),
+                        500,
+                    )
+        medical_record.set_file_paths(list_files)
+        # Save record to the database
         db.session.add(medical_record)
         db.session.commit()
 
+        # Return success response
         return (
             jsonify(
                 {
@@ -87,8 +185,19 @@ def create_record(user_id):
             ),
             201,
         )
+
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": f"An error occurred: {str(e)}",
+                }
+            ),
+            500,
+        )
 
 
 @app_views.route("/user_records/<user_id>", methods=["GET"], strict_slashes=False)
