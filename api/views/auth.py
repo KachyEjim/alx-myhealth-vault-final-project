@@ -33,6 +33,8 @@ def signup():
             jsonify(
                 {
                     "error": "MISSING_FIELDS",
+                    "status": False,
+                    "statusCode": 400,
                     "msg": "Full name, email, and password are required.",
                 }
             ),
@@ -42,7 +44,14 @@ def signup():
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return (
-            jsonify({"error": "USER_EXISTS", "msg": "Email is already in use."}),
+            jsonify(
+                {
+                    "error": "USER_EXISTS",
+                    "status": False,
+                    "statusCode": 400,
+                    "msg": "Email is already in use.",
+                }
+            ),
             400,
         )
 
@@ -58,22 +67,24 @@ def signup():
         )
         new_user.hash_password()
 
-        # Send verification email after successful registration
         send_verification_email(
             new_user,
             subject="Email Verification",
-            body=f"Welcome to Our Platform!\nWe’re thrilled to have you on board.\n\nPlease verify your email address by clicking the link below:\n\n",
-            footer="If you did not sign up for this account, please ignore this email.\n\n",
+            body="Welcome to Our Platform!\nPlease verify your email by clicking the link below.",
+            footer="If you did not sign up for this account, please ignore this email.",
             action_text="Verify Your Account",
         )
+
         db.session.add(new_user)
         db.session.commit()
+
         return (
             jsonify(
                 {
                     "msg": "User registered successfully! Verification email sent.",
                     "status": True,
-                    "statusCode": 200,
+                    "statusCode": 201,
+                    "data": new_user.to_dict(),  # Include user data if needed
                 }
             ),
             201,
@@ -84,7 +95,9 @@ def signup():
             jsonify(
                 {
                     "error": "INTERNAL_SERVER_ERROR",
-                    "msg": f"An unexpected error occurred. {str(e)}",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": f"An unexpected error occurred: {str(e)}",
                 }
             ),
             500,
@@ -94,28 +107,25 @@ def signup():
 @app_views.route("/login", methods=["POST"], strict_slashes=False)
 def login():
     data = request.get_json()
-
     email = data.get("email")
     password = data.get("password")
 
-    # Retrieve the user from the database by email
     user = User.query.filter_by(email=email).first()
 
-    # Check if the user is verified
     if user and not user.is_verified:
         return (
             jsonify(
                 {
                     "error": "USER_NOT_VERIFIED",
-                    "msg": "Please verify your email address before logging in.",
+                    "status": False,
+                    "statusCode": 403,
+                    "msg": "Please verify your email before logging in.",
                 }
             ),
             403,
-        )  # Forbidden, as user needs verification
+        )
 
-    # Check if the user's password is correct
     if user and user.check_password(password):
-        # Generate access and refresh tokens with custom claims
         access_token = create_access_token(
             identity=user.id, additional_claims={"role": user.role}
         )
@@ -123,31 +133,31 @@ def login():
             identity=user.id, additional_claims={"role": user.role}
         )
 
-        # Return successful login response
         return (
             jsonify(
                 {
-                    "msg": "Login successful",
+                    "msg": "Login successful.",
+                    "status": True,
+                    "statusCode": 200,
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                     "user": user.to_dict(),
-                    "status": True,
-                    "statusCode": 200,
                 }
             ),
             200,
         )
     else:
-        # Return invalid credentials error
         return (
             jsonify(
-                {"error": "INVALID_CREDENTIALS", "message": "Invalid email or password"}
+                {
+                    "error": "INVALID_CREDENTIALS",
+                    "status": False,
+                    "statusCode": 401,
+                    "msg": "Invalid email or password.",
+                }
             ),
             401,
-        )  # Unauthorized, as credentials are incorrect
-
-
-# Secret key for JWT encoding
+        )
 
 
 def send_verification_email(user, subject, body, footer, action_text):
@@ -182,15 +192,20 @@ def send_verification_email(user, subject, body, footer, action_text):
 @app_views.route("/verify-email/<token>", methods=["GET"], strict_slashes=False)
 def verify_email(token):
     try:
-        # Decode the JWT token to get the user ID
         payload = jwt.decode(token, Config.SECRET_KEY, algorithms=["HS256"])
         user_id = payload["user_id"]
 
-        # Retrieve the user and mark them as verified
         user = User.query.get(user_id)
         if not user:
             return (
-                jsonify({"error": "USER_NOT_FOUND", "message": "User not found"}),
+                jsonify(
+                    {
+                        "status": False,
+                        "statusCode": 404,
+                        "error": "USER_NOT_FOUND",
+                        "msg": "User not found",
+                    }
+                ),
                 404,
             )
 
@@ -205,6 +220,8 @@ def verify_email(token):
         return (
             jsonify(
                 {
+                    "status": False,
+                    "statusCode": 400,
                     "error": "TOKEN_EXPIRED",
                     "msg": "The verification token has expired",
                 }
@@ -215,7 +232,12 @@ def verify_email(token):
     except InvalidTokenError:
         return (
             jsonify(
-                {"error": "INVALID_TOKEN", "msg": "Invalid verification token"}
+                {
+                    "status": False,
+                    "statusCode": 400,
+                    "error": "INVALID_TOKEN",
+                    "msg": "Invalid verification token",
+                }
             ),
             400,
         )
@@ -231,13 +253,27 @@ def resend_verification_email():
     if not user:
         return (
             jsonify(
-                {"error": "USER_NOT_FOUND", "message": "No user found with that email."}
+                {
+                    "status": False,
+                    "statusCode": 404,
+                    "error": "USER_NOT_FOUND",
+                    "msg": "No user found with that email.",
+                }
             ),
             404,
         )
 
     if user.is_verified:
-        return jsonify({"message": "This account is already verified."}), 400
+        return (
+            jsonify(
+                {
+                    "status": False,
+                    "statusCode": 400,
+                    "msg": "This account is already verified.",
+                }
+            ),
+            400,
+        )
 
     send_verification_email(
         user,
@@ -249,9 +285,9 @@ def resend_verification_email():
     return (
         jsonify(
             {
-                "message": "Verification email resent. Please check your inbox.",
                 "status": True,
                 "statusCode": 200,
+                "msg": "Verification email resent. Please check your inbox.",
             }
         ),
         200,
@@ -272,8 +308,10 @@ def reset_password(token):
             return (
                 jsonify(
                     {
+                        "status": False,
+                        "statusCode": 400,
                         "error": "MISSING_PASSWORD",
-                        "message": "New password is required.",
+                        "msg": "New password is required.",
                     }
                 ),
                 400,
@@ -286,12 +324,15 @@ def reset_password(token):
         return redirect(
             "https://incomparable-parfait-456242.netlify.app/auth/login", code=302
         )
+
     except jwt.ExpiredSignatureError:
         return (
             jsonify(
                 {
+                    "status": False,
+                    "statusCode": 400,
                     "error": "TOKEN_EXPIRED",
-                    "message": "The password reset link has expired.",
+                    "msg": "The password reset link has expired.",
                 }
             ),
             400,
@@ -300,7 +341,12 @@ def reset_password(token):
     except jwt.InvalidTokenError:
         return (
             jsonify(
-                {"error": "INVALID_TOKEN", "message": "Invalid password reset token."}
+                {
+                    "status": False,
+                    "statusCode": 400,
+                    "error": "INVALID_TOKEN",
+                    "msg": "Invalid password reset token.",
+                }
             ),
             400,
         )
@@ -312,14 +358,29 @@ def forgot_password():
     email = data.get("email")
 
     if not email:
-        return jsonify({"error": "MISSING_EMAIL", "message": "Email is required."}), 400
+        return (
+            jsonify(
+                {
+                    "status": False,
+                    "statusCode": 400,
+                    "error": "MISSING_EMAIL",
+                    "msg": "Email is required.",
+                }
+            ),
+            400,
+        )
 
     user = User.query.filter_by(email=email).first()
 
     if not user:
         return (
             jsonify(
-                {"error": "USER_NOT_FOUND", "message": "No user found with this email."}
+                {
+                    "status": False,
+                    "statusCode": 404,
+                    "error": "USER_NOT_FOUND",
+                    "msg": "No user found with this email.",
+                }
             ),
             404,
         )
@@ -348,11 +409,7 @@ def forgot_password():
 
     return (
         jsonify(
-            {
-                "msg": "Password reset email sent.",
-                "status": True,
-                "statusCode": 200,
-            }
+            {"status": True, "statusCode": 200, "msg": "Password reset email sent."}
         ),
         200,
     )
@@ -371,8 +428,10 @@ def change_password():
         return (
             jsonify(
                 {
+                    "status": False,
+                    "statusCode": 400,
                     "error": "MISSING_FIELDS",
-                    "message": "Old and new passwords are required.",
+                    "msg": "Old and new passwords are required.",
                 }
             ),
             400,
@@ -387,9 +446,9 @@ def change_password():
         return (
             jsonify(
                 {
-                    "msg": "Password changed successfully.",
                     "status": True,
                     "statusCode": 200,
+                    "msg": "Password changed successfully.",
                 }
             ),
             200,
@@ -398,8 +457,10 @@ def change_password():
         return (
             jsonify(
                 {
+                    "status": False,
+                    "statusCode": 401,
                     "error": "INVALID_CREDENTIALS",
-                    "message": "Old password is incorrect.",
+                    "msg": "Old password is incorrect.",
                 }
             ),
             401,
@@ -410,7 +471,15 @@ def change_password():
 @jwt_required(refresh=True)
 def refresh():
     current_user = get_jwt_identity()
-
     new_access_token = create_access_token(identity=current_user)
-
-    return jsonify(access_token=new_access_token)
+    return (
+        jsonify(
+            {
+                "status": True,
+                "statusCode": 200,
+                "access_token": new_access_token,
+                "msg": "Access token refreshed",
+            }
+        ),
+        200,
+    )

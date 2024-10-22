@@ -382,7 +382,8 @@ def update_medical_record(record_id):
 
             for file_path in medical_record.get_file_paths():
                 delete_response = delete_file_from_firebase(file_path)
-
+                if delete_response[1] == 404:
+                    continue
                 if delete_response[1] != 200:
                     return delete_response
 
@@ -443,7 +444,8 @@ def update_medical_record(record_id):
                     {
                         "error": "INTERNAL_SERVER_ERROR",
                         "status": False,
-                        "message": str(e),
+                        "statusCode": 500,
+                        "msg": str(e),
                     }
                 ),
                 500,
@@ -451,7 +453,12 @@ def update_medical_record(record_id):
     except Exception as e:
         return (
             jsonify(
-                {"error": "INTERNAL_SERVER_ERROR", "status": False, "message": str(e)}
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "message": str(e),
+                }
             ),
             500,
         )
@@ -464,7 +471,14 @@ def delete_medical_record(record_id):
 
     if not medical_record:
         return (
-            jsonify({"error": "RECORD_NOT_FOUND", "msg": "Medical record not found."}),
+            jsonify(
+                {
+                    "error": "RECORD_NOT_FOUND",
+                    "msg": "Medical record not found.",
+                    "status": False,
+                    "statusCode": 404,
+                }
+            ),
             404,
         )
 
@@ -479,7 +493,13 @@ def delete_medical_record(record_id):
         db.session.delete(medical_record)
         db.session.commit()
         return (
-            jsonify({"msg": f"Medical record {record_id} successfully deleted!"}),
+            jsonify(
+                {
+                    "msg": f"Medical record {record_id} successfully deleted!",
+                    "status": True,
+                    "statusCode": 200,
+                }
+            ),
             200,
         )
     except Exception as e:
