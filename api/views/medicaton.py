@@ -1,10 +1,27 @@
 import uuid
 from flask import request, jsonify
 from datetime import datetime
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from api import db
 from models.medication import Medication
 from . import app_views
+
+
+# Helper functions for error responses
+def error_response(status, code, message, status_code=400):
+    return (
+        jsonify(
+            {"status": status, "statusCode": status_code, "error": code, "msg": message}
+        ),
+        status_code,
+    )
+
+
+def success_response(message, data=None, status_code=200):
+    response = {"status": True, "statusCode": status_code, "msg": message}
+    if data:
+        response["data"] = data
+    return jsonify(response), status_code
 
 
 @app_views.route("/save-medications", methods=["POST"], strict_slashes=False)
@@ -13,22 +30,18 @@ def save_medications():
     try:
         data = request.get_json()
 
+        # Validate incoming data
         user_id = get_jwt_identity()
-        # Extract the fields from each dictionary
         name = data.get("name")
         when = data.get("when")
         time = data.get("time")
         count = data.get("count")
+
         if not all([name, when, time, count]):
-            return (
-                jsonify(
-                    {
-                        "status": "ERROR",
-                        "error": "MISSING_FIELDS",
-                        "message": "Each medication must have 'name', 'when', and 'time'.",
-                    }
-                ),
-                400,
+            return error_response(
+                "ERROR",
+                "MISSING_FIELDS",
+                "Each medication must have 'name', 'when', 'time', and 'count'.",
             )
 
         # Create a new Medication object
@@ -42,18 +55,14 @@ def save_medications():
         )
 
         db.session.add(new_medication)
-
         db.session.commit()
 
-        return jsonify({"status": "SUCCESS", "medications": new_medication}), 201
+        return success_response(
+            "Medication successfully saved!", new_medication.to_dict(), 201
+        )
 
     except Exception as e:
-        return (
-            jsonify(
-                {"status": "ERROR", "error": "INTERNAL_SERVER_ERROR", "message": str(e)}
-            ),
-            500,
-        )
+        return error_response("ERROR", "INTERNAL_SERVER_ERROR", str(e), 500)
 
 
 @app_views.route("/get-medications", methods=["POST"], strict_slashes=False)
@@ -61,146 +70,101 @@ def save_medications():
 def get_medications():
     try:
         user_id = get_jwt_identity()
-
-        # Get the JSON data from the request
         data = request.get_json()
 
-        # Extract parameters from the JSON data
-        id = data.get("id")
-        time = data.get("time")
-        name = data.get("name")
-        status = data.get("status")
-        created_at = data.get("created_at")
-        updated_at = data.get("updated_at")
-        when = data.get("when")
-        count = data.get("count")
-        count_left = data.get("count_left")
-
-        # If an ID is provided, fetch the specific medication
-        if id:
-            medication = Medication.query.filter_by(user_id=user_id, id=id).first()
-            if medication:
-                return (
-                    jsonify(
-                        {
-                            "msg": "Medication succesfully retrieved",
-                            "status": True,
-                            "statusCode": 200,
-                            "data": medication.to_dict(),
-                        }
-                    ),
-                    200,
-                )
-            else:
-                return (
-                    jsonify(
-                        {
-                            "status": False,
-                            "statusCode": 404,
-                            "error": "NO_MEDICATION_FOUND",
-                            "msg": f"No medication found with id: {id}.",
-                        }
-                    ),
-                    404,
-                )
+        # Extract filter parameters
+        filters = {
+            "id": data.get("id"),
+            "time": data.get("time"),
+            "name": data.get("name"),
+            "status": data.get("status"),
+            "created_at": data.get("created_at"),
+            "updated_at": data.get("updated_at"),
+            "when": data.get("when"),
+            "count": data.get("count"),
+            "count_left": data.get("count_left"),
+        }
 
         query = Medication.query.filter_by(user_id=user_id)
 
-        if count:
-            query = query.filter_by(count=count)
-        if name:
-            query = query.filter(Medication.name.ilike(f"%{name}%"))
-        if count_left:
-            query = query.filter_by(count_left=count_left)
-        if status:
-            query = query.filter_by(status=status)
+        if filters["id"]:
+            medication = Medication.query.filter_by(
+                user_id=user_id, id=filters["id"]
+            ).first()
+            if not medication:
+                return error_response(
+                    "ERROR",
+                    "NO_MEDICATION_FOUND",
+                    f"No medication found with id: {filters['id']}.",
+                    404,
+                )
+            return success_response(
+                "Medication successfully retrieved", medication.to_dict()
+            )
 
-        if created_at:
+        # Apply filters to the query
+        if filters["count"]:
+            query = query.filter_by(count=filters["count"])
+        if filters["name"]:
+            query = query.filter(Medication.name.ilike(f"%{filters['name']}%"))
+        if filters["count_left"]:
+            query = query.filter_by(count_left=filters["count_left"])
+        if filters["status"]:
+            query = query.filter_by(status=filters["status"])
+
+        # Parse date and time filters
+        if filters["created_at"]:
             try:
-                created_at_datetime = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                created_at_datetime = datetime.strptime(
+                    filters["created_at"], "%Y-%m-%d %H:%M:%S"
+                )
                 query = query.filter(Medication.created_at == created_at_datetime)
             except ValueError:
-                return (
-                    jsonify(
-                        {
-                            "status": "ERROR",
-                            "error": "INVALID_DATETIME_FORMAT",
-                            "message": "Invalid format for created_at. Use YYYY-MM-DD HH:MM:SS.",
-                        }
-                    ),
-                    400,
+                return error_response(
+                    "ERROR",
+                    "INVALID_DATETIME_FORMAT",
+                    "Invalid format for created_at. Use YYYY-MM-DD HH:MM:SS.",
                 )
-
-        if updated_at:
+        if filters["updated_at"]:
             try:
-                updated_at_datetime = datetime.strptime(updated_at, "%Y-%m-%d %H:%M:%S")
+                updated_at_datetime = datetime.strptime(
+                    filters["updated_at"], "%Y-%m-%d %H:%M:%S"
+                )
                 query = query.filter(Medication.updated_at == updated_at_datetime)
             except ValueError:
-                return (
-                    jsonify(
-                        {
-                            "status": "ERROR",
-                            "error": "INVALID_DATETIME_FORMAT",
-                            "msg": "Invalid format for updated_at. Use YYYY-MM-DD HH:MM:SS.",
-                        }
-                    ),
-                    400,
+                return error_response(
+                    "ERROR",
+                    "INVALID_DATETIME_FORMAT",
+                    "Invalid format for updated_at. Use YYYY-MM-DD HH:MM:SS.",
                 )
 
-        if time:
+        if filters["time"]:
             try:
-                when_time = datetime.strptime(
-                    time, "%H:%M"
-                ).time()  # Parse time as HH:MM
+                when_time = datetime.strptime(filters["time"], "%H:%M").time()
                 query = query.filter(Medication.time == when_time)
             except ValueError:
-                return (
-                    jsonify(
-                        {
-                            "status": "ERROR",
-                            "error": "INVALID_TIME_FORMAT",
-                            "message": "Invalid format for when. Use HH:MM.",
-                        }
-                    ),
-                    400,
+                return error_response(
+                    "ERROR",
+                    "INVALID_TIME_FORMAT",
+                    "Invalid format for time. Use HH:MM.",
                 )
-        if when:
-            query = query.filter_by(when=when)
+
+        if filters["when"]:
+            query = query.filter_by(when=filters["when"])
 
         medications = query.all()
 
         if not medications:
-            return (
-                jsonify(
-                    {
-                        "status": True,
-                        "statusCode": 404,
-                        "error": "NO_MEDICATIONS_FOUND",
-                        "message": "No medications found.",
-                    }
-                ),
-                404,
+            return error_response(
+                "ERROR", "NO_MEDICATIONS_FOUND", "No medications found.", 404
             )
 
-        return (
-            jsonify(
-                {
-                    "msg": "Medication succesfully retrieved",
-                    "status": True,
-                    "statusCode": 200,
-                    "data": [med.to_dict() for med in medications],
-                }
-            ),
-            200,
+        return success_response(
+            "Medications successfully retrieved", [med.to_dict() for med in medications]
         )
 
     except Exception as e:
-        return (
-            jsonify(
-                {"status": "ERROR", "error": "INTERNAL_SERVER_ERROR", "message": str(e)}
-            ),
-            500,
-        )
+        return error_response("ERROR", "INTERNAL_SERVER_ERROR", str(e), 500)
 
 
 @app_views.route("/update-medications/<med_id>", methods=["PUT"], strict_slashes=False)
@@ -210,48 +174,26 @@ def update_medication(med_id):
         data = request.get_json()
         user_id = get_jwt_identity()
 
-        medication = Medication.query.filter_by(med_id=med_id, user_id=user_id).first()
-
+        # Check if medication exists
+        medication = Medication.query.filter_by(id=med_id, user_id=user_id).first()
         if not medication:
-            return (
-                jsonify(
-                    {
-                        "status": False,
-                        "statusCode": 404,
-                        "error": "MEDICATION_NOT_FOUND",
-                        "msg": "Medication not found.",
-                    }
-                ),
-                404,
+            return error_response(
+                "ERROR", "MEDICATION_NOT_FOUND", "Medication not found.", 404
             )
 
-        # Update fields if they exist in the request
+        # Update fields if present in the request
         medication.name = data.get("name", medication.name)
         medication.when = data.get("when", medication.when)
         medication.time = data.get("time", medication.time)
         medication.status = data.get("status", medication.status)
         medication.count = data.get("count", medication.count)
+
         db.session.commit()
 
-        return (
-            jsonify(
-                {
-                    "status": True,
-                    "statusCode": 200,
-                    "msg": "Medication updated successfully!",
-                    "data": medication.to_dict(),
-                }
-            ),
-            200,
-        )
+        return success_response("Medication updated successfully", medication.to_dict())
 
     except Exception as e:
-        return (
-            jsonify(
-                {"status": "ERROR", "error": "INTERNAL_SERVER_ERROR", "message": str(e)}
-            ),
-            500,
-        )
+        return error_response("ERROR", "INTERNAL_SERVER_ERROR", str(e), 500)
 
 
 @app_views.route(
@@ -262,34 +204,17 @@ def delete_medication(med_id):
     try:
         user_id = get_jwt_identity()
 
-        medication = Medication.query.filter_by(med_id=med_id, user_id=user_id).first()
-
+        # Check if medication exists
+        medication = Medication.query.filter_by(id=med_id, user_id=user_id).first()
         if not medication:
-            return (
-                jsonify(
-                    {
-                        "status": "ERROR",
-                        "error": "MEDICATION_NOT_FOUND",
-                        "message": "Medication not found.",
-                    }
-                ),
-                404,
+            return error_response(
+                "ERROR", "MEDICATION_NOT_FOUND", "Medication not found.", 404
             )
 
         db.session.delete(medication)
         db.session.commit()
 
-        return (
-            jsonify(
-                {"status": "SUCCESS", "MSG": "Medication deleted successfully!"}
-            ),
-            200,
-        )
+        return success_response("Medication deleted successfully!")
 
     except Exception as e:
-        return (
-            jsonify(
-                {"status": "ERROR", "error": "INTERNAL_SERVER_ERROR", "message": str(e)}
-            ),
-            500,
-        )
+        return error_response("ERROR", "INTERNAL_SERVER_ERROR", str(e), 500)
