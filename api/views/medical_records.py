@@ -11,6 +11,7 @@ from api.views.routes import (
     ALLOWED_EXTENSIONS,
     DOCUMENT_EXTENSIONS,
     COMPRESSED_EXTENSIONS,
+    delete_file_from_firebase,
 )
 from werkzeug.utils import secure_filename
 
@@ -112,8 +113,6 @@ def create_record(user_id):
             status=status,
             practitioner_name=practitioner_name,
         )
-
-        print(medical_record)
 
         # Handle file upload (if any)
         files = request.files
@@ -351,7 +350,7 @@ def update_medical_record(record_id):
             404,
         )
     try:
-        data = request.get_json()
+        data = request.form
 
         if not data:
             return (
@@ -379,7 +378,65 @@ def update_medical_record(record_id):
         medical_record.practitioner_name = data.get(
             "practitioner_name", medical_record.practitioner_name
         )
+        files = request.files
+        if not files:
+            return (
+                jsonify(
+                    {
+                        "error": "NO_FILES_UPLOADED",
+                        "status": False,
+                        "statusCode": 400,
+                        "msg": "No files were uploaded.",
+                    }
+                ),
+                400,
+            )
+        for file_path in medical_record.get_file_paths():
+            delete_response = delete_file_from_firebase(file_path)
 
+            if delete_response[1] != 200:
+                return delete_response
+
+        list_files = []
+        for file in files.values():
+            if file:
+                if not allowed_file(
+                    file.filename, DOCUMENT_EXTENSIONS, COMPRESSED_EXTENSIONS
+                ):
+                    return (
+                        jsonify(
+                            {
+                                "error": "INVALID_FILE_FORMAT",
+                                "status": False,
+                                "statusCode": 400,
+                                "msg": f"File format not allowed. Allowed types: {', '.join(DOCUMENT_EXTENSIONS)}{', '.join(COMPRESSED_EXTENSIONS)}",
+                            }
+                        ),
+                        400,
+                    )
+
+                # Upload the file securely
+                print(medical_record.id)
+                new_filename = f"medicalFiles/{medical_record.user_id}/{medical_record.id}/{secure_filename(file.filename)}"
+                try:
+                    file_path = upload_file(
+                        new_filename, file
+                    )  # Assuming upload_file returns the file URL/path
+                    list_files.append(file_path)
+                    print(file_path)
+                except Exception as e:
+                    return (
+                        jsonify(
+                            {
+                                "error": "FILE_UPLOAD_ERROR",
+                                "status": False,
+                                "statusCode": 500,
+                                "msg": f"File upload failed: {str(e)}",
+                            }
+                        ),
+                        500,
+                    )
+        medical_record.set_file_paths(list_files)
         try:
             db.session.commit()
             return (
@@ -425,6 +482,13 @@ def delete_medical_record(record_id):
         )
 
     try:
+        for file_path in medical_record.get_file_paths():
+            delete_response = delete_file_from_firebase(file_path)
+
+            # Check for any error during file deletion
+            if delete_response[1] != 200:  # Response tuple (json, status_code)
+                return delete_response
+
         db.session.delete(medical_record)
         db.session.commit()
         return (
@@ -433,3 +497,26 @@ def delete_medical_record(record_id):
         )
     except Exception as e:
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "msg": str(e)}), 500
+
+
+@app_views.route("/delete_file", methods=["DELETE"], strict_slashes=False)
+def delete_file():
+    data = request.get_json()
+    file_path = data.get("file_path")
+
+    # Validate if the file_path is provided
+    if not file_path:
+        return (
+            jsonify(
+                {
+                    "error": "BAD_REQUEST",
+                    "status": False,
+                    "statusCode": 400,
+                    "msg": "File path is required.",
+                }
+            ),
+            400,
+        )
+
+    # Call the function to delete the file
+    return delete_file_from_firebase(file_path)

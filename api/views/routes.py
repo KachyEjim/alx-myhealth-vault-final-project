@@ -106,3 +106,48 @@ def upload_file(file_name, file):
         return blob.public_url
     except Exception as e:
         raise Exception(f"Error uploading file: {str(e)}")
+
+
+def delete_file_from_firebase(file_path):
+    try:
+        # Reference to the file in Firebase Storage
+        blob = bucket.blob(file_path)
+
+        # Check if the file exists before deleting
+        if not blob.exists():
+            return (
+                jsonify(
+                    {
+                        "error": "FILE_NOT_FOUND",
+                        "status": False,
+                        "statusCode": 404,
+                        "msg": f"File '{file_path}' not found.",
+                    }
+                ),
+                404,
+            )
+
+        # Delete the file
+        blob.delete()
+        return (
+            jsonify(
+                {
+                    "msg": f"File '{file_path}' successfully deleted.",
+                    "status": True,
+                    "statusCode": 200,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "error": "FILE_DELETION_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": f"An error occurred while deleting the file: {str(e)}",
+                }
+            ),
+            500,
+        )
