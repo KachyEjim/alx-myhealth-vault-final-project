@@ -76,7 +76,17 @@ def create_record(user_id):
         db.session.add(medical_record)
         db.session.commit()
 
-        return jsonify(medical_record.to_dict()), 201
+        return (
+            jsonify(
+                {
+                    "msg": "Medical Records successfully created",
+                    "status": True,
+                    "statusCode": 201,
+                    "data": medical_record.to_dict(),
+                }
+            ),
+            201,
+        )
     except Exception as e:
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
@@ -99,7 +109,17 @@ def get_user_medical_records(user_id):
         # If JSON data is not present, return all records
         if data is None:
             records = MedicalRecords.query.filter_by(user_id=user_id).all()
-            return jsonify([record.to_dict() for record in records]), 200
+            return (
+                jsonify(
+                    {
+                        "msg": "Medical Records successfully retrieved",
+                        "status": True,
+                        "statusCode": 200,
+                        "data": [record.to_dict() for record in records],
+                    }
+                ),
+                200,
+            )
 
         # Process the incoming JSON data
         id = data.get("id")
@@ -116,7 +136,17 @@ def get_user_medical_records(user_id):
                     404,
                 )
 
-            return jsonify(record.to_dict()), 200
+            return (
+                jsonify(
+                    {
+                        "msg": "Medical Record successfully retrieved",
+                        "status": True,
+                        "statusCode": 200,
+                        "data": record.to_dict(),
+                    }
+                ),
+                200,
+            )
 
         limit = int(data.get("limit")) if data.get("limit") else None
         sort_by = data.get("sort_by", "last_added")
@@ -182,9 +212,19 @@ def get_user_medical_records(user_id):
                 404,
             )
 
-        return jsonify([record.to_dict() for record in records]), 200
+        return (
+            jsonify(
+                {
+                    "msg": "Medical Records successfully retrieved",
+                    "status": True,
+                    "statusCode": 200,
+                    "data": [record.to_dict() for record in records],
+                }
+            ),
+            200,
+        )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return jsonify({"error": "INTERNAL_SERVER_ERROR", "msg": str(e)}), 500
 
 
 @app_views.route(
@@ -236,16 +276,32 @@ def update_medical_record(record_id):
             return (
                 jsonify(
                     {
-                        "message": "Medical record updated successfully",
-                        "record": medical_record.to_dict(),
+                        "msg": "Medical record updated successfully",
+                        "status": True,
+                        "statusCode": 200,
+                        "data": medical_record.to_dict(),
                     }
                 ),
                 200,
             )
         except Exception as e:
-            return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+            return (
+                jsonify(
+                    {
+                        "error": "INTERNAL_SERVER_ERROR",
+                        "status": False,
+                        "message": str(e),
+                    }
+                ),
+                500,
+            )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return (
+            jsonify(
+                {"error": "INTERNAL_SERVER_ERROR", "status": False, "message": str(e)}
+            ),
+            500,
+        )
 
 
 @app_views.route("/delete_record/<record_id>", methods=["DELETE"], strict_slashes=False)
@@ -255,9 +311,7 @@ def delete_medical_record(record_id):
 
     if not medical_record:
         return (
-            jsonify(
-                {"error": "RECORD_NOT_FOUND", "message": "Medical record not found."}
-            ),
+            jsonify({"error": "RECORD_NOT_FOUND", "msg": "Medical record not found."}),
             404,
         )
 
@@ -265,8 +319,8 @@ def delete_medical_record(record_id):
         db.session.delete(medical_record)
         db.session.commit()
         return (
-            jsonify({"message": f"Medical record {record_id} successfully deleted!"}),
+            jsonify({"msg": f"Medical record {record_id} successfully deleted!"}),
             200,
         )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+        return jsonify({"error": "INTERNAL_SERVER_ERROR", "msg": str(e)}), 500

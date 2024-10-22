@@ -29,14 +29,16 @@ mail.init_app(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
+
+CORS(app, resources={r"/api/*": {"origins": "*"}})
+app.config["JWT_SECRET_KEY"] = "shsuy3y9e8hhw##4tlytyskb}{FG{}}"
+
 try:
     app.register_blueprint(app_views)
 except Exception:
     for rule in app.url_map.iter_rules():
         print(rule.endpoint, rule.rule)
     exit()
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-app.config["JWT_SECRET_KEY"] = "your_secret_key"
 
 
 def add_token_to_blocklist(jti, expires_in):
@@ -155,7 +157,8 @@ stop_event = Event()
 # Function to send email
 from flask import render_template
 
-def send_email(to, subject, body, template_name="email_template.html", **kwargs):
+
+def send_email(name, to, subject, body, template_name="email_template.html", **kwargs):
     """
     Send a dynamic email using a template.
 
@@ -166,12 +169,15 @@ def send_email(to, subject, body, template_name="email_template.html", **kwargs)
     :param kwargs: Additional dynamic fields for the email template
     """
     msg = Message(subject, recipients=[to])
-    
+
     # Render the HTML template with dynamic content
-    msg.html = render_template(template_name, subject=subject, body=body, **kwargs)
-    
+    msg.html = render_template(
+        template_name, subject=subject, body=body, name=name, **kwargs
+    )
+
     # Send the email
     mail.send(msg)
+
 
 # Function to update appointment statuses and send notifications
 def check_appointments():
@@ -242,6 +248,7 @@ swagger = Swagger(app, template_file="swagger_doc.yaml")
 if __name__ == "__main__":
     """Main Function"""
     with app.app_context():
+
         db.create_all()
     host = environ.get("HBNB_API_HOST", "0.0.0.0")
     port = environ.get("HBNB_API_PORT", "5000")

@@ -81,16 +81,24 @@ def get_medications():
             medication = Medication.query.filter_by(user_id=user_id, id=id).first()
             if medication:
                 return (
-                    jsonify({"status": "SUCCESS", "medication": medication.to_dict()}),
+                    jsonify(
+                        {
+                            "msg": "Medication succesfully retrieved",
+                            "status": True,
+                            "statusCode": 200,
+                            "data": medication.to_dict(),
+                        }
+                    ),
                     200,
                 )
             else:
                 return (
                     jsonify(
                         {
-                            "status": "ERROR",
+                            "status": False,
+                            "statusCode": 404,
                             "error": "NO_MEDICATION_FOUND",
-                            "message": f"No medication found with id: {id}.",
+                            "msg": f"No medication found with id: {id}.",
                         }
                     ),
                     404,
@@ -133,7 +141,7 @@ def get_medications():
                         {
                             "status": "ERROR",
                             "error": "INVALID_DATETIME_FORMAT",
-                            "message": "Invalid format for updated_at. Use YYYY-MM-DD HH:MM:SS.",
+                            "msg": "Invalid format for updated_at. Use YYYY-MM-DD HH:MM:SS.",
                         }
                     ),
                     400,
@@ -165,7 +173,8 @@ def get_medications():
             return (
                 jsonify(
                     {
-                        "status": "ERROR",
+                        "status": True,
+                        "statusCode": 404,
                         "error": "NO_MEDICATIONS_FOUND",
                         "message": "No medications found.",
                     }
@@ -176,8 +185,10 @@ def get_medications():
         return (
             jsonify(
                 {
-                    "status": "SUCCESS",
-                    "medications": [med.to_dict() for med in medications],
+                    "msg": "Medication succesfully retrieved",
+                    "status": True,
+                    "statusCode": 200,
+                    "data": [med.to_dict() for med in medications],
                 }
             ),
             200,
@@ -205,9 +216,10 @@ def update_medication(med_id):
             return (
                 jsonify(
                     {
-                        "status": "ERROR",
+                        "status": False,
+                        "statusCode": 404,
                         "error": "MEDICATION_NOT_FOUND",
-                        "message": "Medication not found.",
+                        "msg": "Medication not found.",
                     }
                 ),
                 404,
@@ -224,9 +236,10 @@ def update_medication(med_id):
         return (
             jsonify(
                 {
-                    "status": "SUCCESS",
-                    "message": "Medication updated successfully!",
-                    "medication": medication.to_dict(),
+                    "status": True,
+                    "statusCode": 200,
+                    "msg": "Medication updated successfully!",
+                    "data": medication.to_dict(),
                 }
             ),
             200,
@@ -268,7 +281,7 @@ def delete_medication(med_id):
 
         return (
             jsonify(
-                {"status": "SUCCESS", "message": "Medication deleted successfully!"}
+                {"status": "SUCCESS", "MSG": "Medication deleted successfully!"}
             ),
             200,
         )

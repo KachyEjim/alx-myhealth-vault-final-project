@@ -1,5 +1,5 @@
 from . import app_views
-from flask import request, jsonify
+from flask import request, jsonify, redirect
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -33,7 +33,7 @@ def signup():
             jsonify(
                 {
                     "error": "MISSING_FIELDS",
-                    "message": "Full name, email, and password are required.",
+                    "msg": "Full name, email, and password are required.",
                 }
             ),
             400,
@@ -42,7 +42,7 @@ def signup():
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return (
-            jsonify({"error": "USER_EXISTS", "message": "Email is already in use."}),
+            jsonify({"error": "USER_EXISTS", "msg": "Email is already in use."}),
             400,
         )
 
@@ -57,14 +57,24 @@ def signup():
             age=age,
         )
         new_user.hash_password()
+
+        # Send verification email after successful registration
+        send_verification_email(
+            new_user,
+            subject="Email Verification",
+            body=f"Welcome to Our Platform!\nWe’re thrilled to have you on board.\n\nPlease verify your email address by clicking the link below:\n\n",
+            footer="If you did not sign up for this account, please ignore this email.\n\n",
+            action_text="Verify Your Account",
+        )
         db.session.add(new_user)
         db.session.commit()
-        # Send verification email after successful registration
-        send_verification_email(new_user)
-
         return (
             jsonify(
-                {"message": "User registered successfully! Verification email sent."}
+                {
+                    "msg": "User registered successfully! Verification email sent.",
+                    "status": True,
+                    "statusCode": 200,
+                }
             ),
             201,
         )
@@ -74,7 +84,7 @@ def signup():
             jsonify(
                 {
                     "error": "INTERNAL_SERVER_ERROR",
-                    "message": f"An unexpected error occurred. {str(e)}",
+                    "msg": f"An unexpected error occurred. {str(e)}",
                 }
             ),
             500,
@@ -97,7 +107,7 @@ def login():
             jsonify(
                 {
                     "error": "USER_NOT_VERIFIED",
-                    "message": "Please verify your email address before logging in.",
+                    "msg": "Please verify your email address before logging in.",
                 }
             ),
             403,
@@ -117,10 +127,12 @@ def login():
         return (
             jsonify(
                 {
-                    "message": "Login successful",
+                    "msg": "Login successful",
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                     "user": user.to_dict(),
+                    "status": True,
+                    "statusCode": 200,
                 }
             ),
             200,
@@ -138,7 +150,7 @@ def login():
 # Secret key for JWT encoding
 
 
-def send_verification_email(user):
+def send_verification_email(user, subject, body, footer, action_text):
     token = jwt.encode(
         {
             "user_id": user.id,
@@ -152,19 +164,19 @@ def send_verification_email(user):
         f"https://myhealthvault-backend.onrender.com/api/verify-email/{token}"
     )
 
-    msg = Message(
-        subject="Email Verification",
-        recipients=[user.email],
-        body=f"Hi {user.full_name},\n\nPlease verify your email address by clicking the link below:\n\n{verification_link}\n\nIf you did not sign up for this account, please ignore this email.",
-    )
-    from api.app import mail
+    from api.app import send_email
 
-    mail.send(msg)
-
-    return (
-        jsonify({"message": "Verification email sent. Please check your inbox."}),
-        200,
+    send_email(
+        to=user.email,
+        name=user.full_name,
+        subject=subject,
+        body=body,
+        action_url=verification_link,
+        action_text=action_text,
+        footer=footer,
+        current_year=2024,
     )
+    return
 
 
 @app_views.route("/verify-email/<token>", methods=["GET"], strict_slashes=False)
@@ -185,9 +197,8 @@ def verify_email(token):
         user.is_verified = True
         db.session.commit()
 
-        return (
-            jsonify({"message": "Email verified successfully. You can now log in."}),
-            200,
+        return redirect(
+            "https://incomparable-parfait-456242.netlify.app/auth/login", code=302
         )
 
     except ExpiredSignatureError:
@@ -195,7 +206,7 @@ def verify_email(token):
             jsonify(
                 {
                     "error": "TOKEN_EXPIRED",
-                    "message": "The verification token has expired",
+                    "msg": "The verification token has expired",
                 }
             ),
             400,
@@ -204,7 +215,7 @@ def verify_email(token):
     except InvalidTokenError:
         return (
             jsonify(
-                {"error": "INVALID_TOKEN", "message": "Invalid verification token"}
+                {"error": "INVALID_TOKEN", "msg": "Invalid verification token"}
             ),
             400,
         )
@@ -228,9 +239,21 @@ def resend_verification_email():
     if user.is_verified:
         return jsonify({"message": "This account is already verified."}), 400
 
-    send_verification_email(user)
+    send_verification_email(
+        user,
+        subject="Email Verification",
+        body="Please verify your email address by clicking the link below:\n\n",
+        footer="If you did not sign up for this account, please ignore this email.\n\n",
+        action_text="Verify Your Account",
+    )
     return (
-        jsonify({"message": "Verification email resent. Please check your inbox."}),
+        jsonify(
+            {
+                "message": "Verification email resent. Please check your inbox.",
+                "status": True,
+                "statusCode": 200,
+            }
+        ),
         200,
     )
 
@@ -260,8 +283,9 @@ def reset_password(token):
         user.hash_password()
         db.session.commit()
 
-        return jsonify({"message": "Password reset successfully."}), 200
-
+        return redirect(
+            "https://incomparable-parfait-456242.netlify.app/auth/login", code=302
+        )
     except jwt.ExpiredSignatureError:
         return (
             jsonify(
@@ -305,18 +329,33 @@ def forgot_password():
         Config.SECRET_KEY,
         algorithm="HS256",
     )
-    reset_link = f"http://yourdomain.com/reset-password/{token}"
-
-    msg = Message(
-        subject="Password Reset",
-        recipients=[email],
-        body=f"Click the link to reset your password: {reset_link}",
+    reset_link = (
+        f"https://myhealthvault-backend.onrender.com/api/reset-password/{token}"
     )
-    from api.app import mail
 
-    mail.send(msg)
+    from api.app import send_email
 
-    return jsonify({"message": "Password reset email sent."}), 200
+    send_email(
+        to=user.email,
+        name=user.full_name,
+        subject="Rest Your password",
+        body="Click the link below to reset your password",
+        action_url=reset_link,
+        action_text="Reset Your Password",
+        footer="If you did not request this action, please ignore this email.\n\n",
+        current_year=2024,
+    )
+
+    return (
+        jsonify(
+            {
+                "msg": "Password reset email sent.",
+                "status": True,
+                "statusCode": 200,
+            }
+        ),
+        200,
+    )
 
 
 @app_views.route("/change-password", methods=["POST"], strict_slashes=False)
@@ -345,7 +384,16 @@ def change_password():
         user.password = new_password
         user.hash_password()
         db.session.commit()
-        return jsonify({"message": "Password changed successfully."}), 200
+        return (
+            jsonify(
+                {
+                    "msg": "Password changed successfully.",
+                    "status": True,
+                    "statusCode": 200,
+                }
+            ),
+            200,
+        )
     else:
         return (
             jsonify(
@@ -366,5 +414,3 @@ def refresh():
     new_access_token = create_access_token(identity=current_user)
 
     return jsonify(access_token=new_access_token)
-
-

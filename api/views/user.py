@@ -11,7 +11,6 @@ from api.config import bucket
 
 
 # Allowed image extensions
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 
 @app_views.route("/user", methods=["GET"], strict_slashes=False)
@@ -119,6 +118,9 @@ def delete_user(user_id):
         return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
 
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf", "txt", "docx", "webp"}
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -155,7 +157,7 @@ def profile_picture_upload(user_id):
                     400,
                 )
 
-            img = request.files["image"]
+            img = request.files["file"]
 
             if img.filename == "":
                 return (
@@ -227,12 +229,11 @@ def profile_picture_upload(user_id):
                         print(f"Error deleting existing profile picture: {e}")
 
                 # Save the uploaded file temporarily
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    img.save(temp_file)  # Save the image directly
-                    temp_file.flush()
+                from api.views.routes import upload_file
 
-                # Upload new profile picture and update the user profile
-                image_url = user.upload_file([(temp_file.name, img_format)], user_id)
+                image_url = upload_file(
+                    f"profile_pictures/{user.id}", request, img_format
+                )
                 user.profile_picture = image_url
                 db.session.add(user)
                 db.session.commit()
@@ -248,16 +249,14 @@ def profile_picture_upload(user_id):
                     ),
                     500,
                 )
-            finally:
-                if os.path.exists(temp_file.name):
-                    os.remove(temp_file.name)
 
             return (
                 jsonify(
                     {
-                        "status": "SUCCESS",
+                        "status": True,
+                        "statusCode": 200,
                         "success": "IMAGE_UPLOADED",
-                        "message": f"Image '{img.filename}' uploaded successfully.",
+                        "msg": f"Image uploaded successfully.",
                         "image_url": image_url,
                     }
                 ),

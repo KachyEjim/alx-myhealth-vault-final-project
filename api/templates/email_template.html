@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello {{ name }} - {{ subject }}</title>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #007BFF;
+        }
+        h1 {
+            color: #007BFF;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #007BFF;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 20px 0;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .icon {
+            display: block;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .icon i {
+            font-size: 50px;
+            color: #007BFF;
+        }
+        /* Responsive Design */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            p {
+                font-size: 14px;
+            }
+            .button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Icon -->
+        <div class="icon">
+            <i class="fas fa-envelope-open-text"></i>
+        </div>
+
+        <!-- Personalized greeting with the recipient's name -->
+        <h1>Hello {{ name }}</h1>
+
+        <!-- Subject -->
+        <h2>{{ subject }}</h2>
+
+        <!-- Body Content -->
+        <p>{{ body }}</p>
+
+        <!-- Optional Call to Action Button -->
+        {% if action_url %}
+            <div style="text-align:center;">
+                <a href="{{ action_url }}" class="button">{{ action_text }}</a>
+            </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>{{ footer }}</p>
+            <p>If you have any questions, feel free to <a href="tynuev@gmail.com" style="color: #007BFF; text-decoration: none;">contact us</a>.</p>
+            <p>&copy; {{ current_year }} MyHealthVault. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
