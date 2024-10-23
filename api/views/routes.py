@@ -77,7 +77,7 @@ def allowed_file(filename, otherExtensions1=None, otherExtensions2=None):
 
 
 # File upload route
-def upload_file(file_name, file):
+def upload_file(file_name, file, content_type=None):
     # Check if the file part is in the request
 
     if file.filename == "":
@@ -94,8 +94,12 @@ def upload_file(file_name, file):
         file.seek(0)
         blob = bucket.blob(file_name)
 
-        # Use the upload_from_file method correctly
-        blob.upload_from_file(file)
+        if content_type:
+            blob.upload_from_file(file, content_type=content_type)
+            blob.content_disposition = "inline"
+            blob.patch()
+        else:
+            blob.upload_from_file(file)
 
         blob.make_public()
 

@@ -208,6 +208,9 @@ def delete_user(user_id):
 @app_views.route(
     "/upload-profile-picture/<user_id>", methods=["POST"], strict_slashes=False
 )
+@app_views.route(
+    "/upload-profile-picture/<user_id>", methods=["POST"], strict_slashes=False
+)
 @jwt_required()
 def profile_picture_upload(user_id):
     current_user_id = get_jwt_identity()
@@ -240,7 +243,7 @@ def profile_picture_upload(user_id):
                     400,
                 )
 
-            img = request.files["file"]
+            img = request.files["image"]  # Make sure to use "image" key
 
             if img.filename == "":
                 return (
@@ -300,6 +303,10 @@ def profile_picture_upload(user_id):
                     400,
                 )
 
+            # Extract content type from the image
+            content_type = img.mimetype
+            print(content_type)
+
             try:
                 user = User.query.get(user_id)
                 if not user:
@@ -315,11 +322,11 @@ def profile_picture_upload(user_id):
                     except Exception as e:
                         print(f"Error deleting existing profile picture: {e}")
 
-                image_file = request.files[image]
                 # Save the uploaded file temporarily
                 image_url = upload_file(
                     f"profile_pictures/{user.id}.{img_format}",
-                    image_file,
+                    img,  # Passing the image file
+                    content_type,  # Pass the dynamically extracted content type
                 )
                 user.profile_picture = image_url
                 db.session.add(user)

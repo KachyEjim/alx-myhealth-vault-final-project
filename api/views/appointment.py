@@ -7,15 +7,17 @@ from . import app_views
 from flask_jwt_extended import jwt_required
 
 
-@app_views.route("/get_appointments/<user_id>", methods=["POST"])
+@app_views.route("/get_appointments/<user_id>", methods=["GET", "POST"])
 @jwt_required()
 def get_appointments(user_id):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
 
-    data = request.get_json()
-
+    try:
+        data = request.get_json()
+    except Exception:
+        data = {}
     appointment_id = data.get("id")
     if appointment_id:
         appointment = Appointment.query.get(appointment_id)
@@ -87,7 +89,6 @@ def get_appointments(user_id):
 @app_views.route("/create_appointment/<user_id>", methods=["POST"])
 @jwt_required()
 def create_appointment(user_id):
-    # Check if the user exists
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
