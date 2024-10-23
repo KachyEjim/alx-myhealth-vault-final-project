@@ -80,8 +80,6 @@ def allowed_file(filename, otherExtensions1=None, otherExtensions2=None):
 def upload_file(file_name, file):
     # Check if the file part is in the request
 
-
-
     if file.filename == "":
         raise Exception("Filename is empty")
 
@@ -90,9 +88,7 @@ def upload_file(file_name, file):
     if not allowed_file(file.filename):
         raise Exception("File format not allowed")
 
-
     # Extract the file extension
-
 
     try:
         file.seek(0)
@@ -108,12 +104,21 @@ def upload_file(file_name, file):
         raise Exception(f"Error uploading file: {str(e)}")
 
 
+def extract_relative_path(file_url):
+    base_url = "https://storage.googleapis.com/stockely-1.appspot.com/"
+
+    if file_url.startswith(base_url):
+        return file_url[len(base_url) :]
+
+    return None
+
+
 def delete_file_from_firebase(file_path):
     try:
-        # Reference to the file in Firebase Storage
-        blob = bucket.blob(file_path)
+        relative_path = extract_relative_path(file_path)
+        file_path = relative_path if relative_path else file_path
 
-        # Check if the file exists before deleting
+        blob = bucket.blob(file_path)
         if not blob.exists():
             return (
                 jsonify(
@@ -127,7 +132,6 @@ def delete_file_from_firebase(file_path):
                 404,
             )
 
-        # Delete the file
         blob.delete()
         return (
             jsonify(

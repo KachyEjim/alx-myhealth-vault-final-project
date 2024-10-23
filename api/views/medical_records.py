@@ -362,8 +362,8 @@ def update_medical_record(record_id):
         )
         file = request.files.get("file", None)
         if file:
-
-            delete_response = delete_file_from_firebase(medical_record.file_path)
+            if medical_record.file_path:
+                delete_response = delete_file_from_firebase(medical_record.file_path)
 
             if not allowed_file(
                 file.filename, DOCUMENT_EXTENSIONS, COMPRESSED_EXTENSIONS
@@ -458,8 +458,8 @@ def delete_medical_record(record_id):
 
     try:
         if medical_record.file_path:
-            delete_response = delete_file_from_firebase(medical_record.file_path)
 
+            delete_response = delete_file_from_firebase(medical_record.file_path)
         db.session.delete(medical_record)
         db.session.commit()
         return (
