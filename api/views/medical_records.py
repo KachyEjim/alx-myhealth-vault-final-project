@@ -115,7 +115,7 @@ def create_record(user_id):
         )
 
         # Handle file upload (if any)
-        file = request.files
+        file = request.files.get("file", None)
         if file:
 
             if not allowed_file(
@@ -360,7 +360,7 @@ def update_medical_record(record_id):
         medical_record.practitioner_name = data.get(
             "practitioner_name", medical_record.practitioner_name
         )
-        file = request.files
+        file = request.files.get("file", None)
         if file:
 
             delete_response = delete_file_from_firebase(medical_record.file_path)
