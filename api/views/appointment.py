@@ -10,18 +10,14 @@ from flask_jwt_extended import jwt_required
 @app_views.route("/get_appointments/<user_id>", methods=["POST"])
 @jwt_required()
 def get_appointments(user_id):
-    # Check if the user exists
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
 
-    # Get the request data
     data = request.get_json()
 
-    # Check if appointment_id is provided in the request
     appointment_id = data.get("id")
     if appointment_id:
-        # If appointment_id is provided, return that specific appointment
         appointment = Appointment.query.get(appointment_id)
         if not appointment or appointment.user_id != user_id:
             return (
@@ -35,10 +31,8 @@ def get_appointments(user_id):
             )
         return jsonify(appointment.to_dict()), 200
 
-    # If no appointment_id is provided, search for appointments based on other criteria
     query = Appointment.query.filter_by(user_id=user_id)
 
-    # Search by optional criteria from the request data
     start_time = data.get("start_time")
     end_time = data.get("end_time")
     status = data.get("status")
@@ -53,7 +47,6 @@ def get_appointments(user_id):
     if doctor_id:
         query = query.filter_by(doctor_id=doctor_id)
 
-    # Filter by status (Upcoming, Completed, Missed, Canceled)
     if status:
         current_time = datetime.now()
         if status == "Upcoming":
@@ -78,7 +71,6 @@ def get_appointments(user_id):
                 400,
             )
 
-    # Get all matching appointments
     appointments = query.all()
 
     if not appointments:
@@ -89,7 +81,6 @@ def get_appointments(user_id):
             404,
         )
 
-    # Return the list of appointments
     return jsonify([appointment.to_dict() for appointment in appointments]), 200
 
 
