@@ -1,4 +1,4 @@
-from flask import render_template
+"""from flask import render_template
 
 
 from colorama import Fore, Style, init
@@ -8,18 +8,16 @@ init(autoreset=True)
 
 
 def log_message(message, color):
-    """
+    
     Print a formatted log message to the terminal with the specified color.
 
     :param message: The message to print
     :param color: The color to use (from colorama.Fore)
-    """
     time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"{color}[{time_now}] {message}{Style.RESET_ALL}")
 
 
 def send_email(name, to, subject, body, template_name="email_template.html", **kwargs):
-    """
     Send a dynamic email using a template.
 
     :param to: Recipient's email address
@@ -27,7 +25,7 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
     :param body: Main body message of the email
     :param template_name: Template file name for the email content
     :param kwargs: Additional dynamic fields for the email template
-    """
+    
     msg = Message(subject, recipients=[to])
 
     # Render the HTML template with dynamic content
@@ -253,3 +251,4 @@ def check_appointments():
 
 
 # Scheduler to check appointments every minute
+"""

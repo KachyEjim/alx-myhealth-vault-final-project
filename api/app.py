@@ -141,6 +141,7 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
     :param template_name: Template file name for the email content
     :param kwargs: Additional dynamic fields for the email template
     """
+
     msg = Message(subject, recipients=[to])
 
     # Render the HTML template with dynamic content
@@ -242,6 +243,7 @@ def check_appointments():
     with app.app_context():
         now = datetime.utcnow()
         now = now + timedelta(hours=1)
+
         appointments = Appointment.query.filter(
             (Appointment.start_time <= now)
             & (Appointment.end_time >= now)
@@ -389,6 +391,7 @@ if __name__ == "__main__":
     """Main Function"""
     with app.app_context():
         from datetime import datetime
+
 
         db.create_all()
     host = environ.get("HBNB_API_HOST", "0.0.0.0")

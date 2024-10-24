@@ -172,7 +172,7 @@ def send_verification_email(user, subject, body, footer, action_text):
     verification_link = (
         f"https://myhealthvault-backend.onrender.com/api/verify-email/{token}"
     )
-    from api.notifications import send_email
+    from api.app import send_email
 
     send_email(
         to=user.email,
