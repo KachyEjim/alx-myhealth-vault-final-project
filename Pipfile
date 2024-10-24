@@ -21,6 +21,7 @@ flask = "*"
 firebase-admin = "*"
 pillow = "*"
 apscheduler = "*"
+colorama = "*"
 
 [dev-packages]
 

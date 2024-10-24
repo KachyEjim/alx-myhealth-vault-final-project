@@ -16,6 +16,7 @@ class Medication(BaseModel):
     status = db.Column(db.String(50), nullable=False, default="upcoming")
     user_id = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("User", back_populates="medications")
+    last_sent = db.Column(db.Date, nullable=True)
 
     def __repr__(self):
         return f"<Medication {self.name}, {self.when}, {self.time}>"
@@ -24,6 +25,8 @@ class Medication(BaseModel):
         return {
             "id": getattr(self, "id", None),
             "status": getattr(self, "status", None),
+            "count": getattr(self, "count", None),
+            "count_left": getattr(self, "count_left", None),
             "name": getattr(self, "name", None),
             "when": getattr(self, "when", None),
             "time": (

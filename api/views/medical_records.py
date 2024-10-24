@@ -132,11 +132,11 @@ def create_record(user_id):
                     ),
                     400,
                 )
-
+            content_type = file.mimetype
             new_filename = f"medicalFiles/{user_id}/{medical_record.id}/{secure_filename(file.filename)}"
             try:
                 file_path = upload_file(
-                    new_filename, file
+                    new_filename, file, content_type
                 )  # Assuming upload_file returns the file URL/path
             except Exception as e:
                 return (
@@ -382,9 +382,11 @@ def update_medical_record(record_id):
 
                 # Upload the file securely
             new_filename = f"medicalFiles/{medical_record.user_id}/{medical_record.id}/{secure_filename(file.filename)}"
+            content_type = file.mimetype
+
             try:
                 file_path = upload_file(
-                    new_filename, file
+                    new_filename, file, content_type
                 )  # Assuming upload_file returns the file URL/path
             except Exception as e:
                 return (

@@ -11,7 +11,6 @@ from api import db
 from models.user import User
 import jwt
 from datetime import datetime, timedelta
-from flask_mail import Message
 from jwt import ExpiredSignatureError, InvalidTokenError
 from api.config import Config
 
@@ -173,8 +172,7 @@ def send_verification_email(user, subject, body, footer, action_text):
     verification_link = (
         f"https://myhealthvault-backend.onrender.com/api/verify-email/{token}"
     )
-
-    from api.app import send_email
+    from api.notifications import send_email
 
     send_email(
         to=user.email,
@@ -393,8 +391,7 @@ def forgot_password():
     reset_link = (
         f"https://myhealthvault-backend.onrender.com/api/reset-password/{token}"
     )
-
-    from api.app import send_email
+    from api.notifications import send_email
 
     send_email(
         to=user.email,
@@ -482,4 +479,45 @@ def refresh():
             }
         ),
         200,
+    )
+
+
+@app_views.route("/join_appointment/<appointment_id>", methods=["GET"])
+def join_appointment(appointment_id):
+    from flask import redirect
+    from models.appointment import Appointment
+
+    now = datetime.now()
+
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return (
+            jsonify(
+                {"error": "APPOINTMENT_NOT_FOUND", "message": "Appointment not found."}
+            ),
+            404,
+        )
+
+    if (
+        appointment.start_time <= now <= appointment.end_time
+        and appointment.status == "Notified"
+    ):
+        appointment.status = "Ongoing"
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
+
+        redirect_url = "https://incomparable-parfait-456242.netlify.app/auth/login/?redirect_to=/appointments/reschedule"
+        return redirect(redirect_url)
+
+    return (
+        jsonify(
+            {
+                "error": "INVALID_APPOINTMENT_STATUS",
+                "message": "The appointment is either not ongoing or has a different status.",
+            }
+        ),
+        400,
     )

@@ -7,3 +7,5 @@ from .user import *
 from .auth import *
 from .medical_records import *
 from .appointment import *
+from .dashboard import *
+from .medicaton import *

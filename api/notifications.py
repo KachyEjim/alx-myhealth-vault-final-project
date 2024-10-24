@@ -1,123 +1,10 @@
-from flask import Flask, jsonify, request, render_template
-from flask_cors import CORS
-from flasgger import Swagger
-from os import environ
-from . import db, bcrypt, jwt_redis_blocklist, mail
-from .config import Config
-from .views import app_views
-from flask_migrate import Migrate
-from flask_jwt_extended import (
-    JWTManager,
-    jwt_required,
-    get_jwt_identity,
-    get_jwt,
-)
-from datetime import timedelta, date, datetime
-from models.medication import Medication
-from models.user import User
-from models.doctor import Doctor
-from flask_mail import Message
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.executors.pool import ThreadPoolExecutor
+from flask import render_template
 
-from threading import Event
+
 from colorama import Fore, Style, init
 
-
-app = Flask(__name__)
-app.config.from_object(Config)
-bcrypt.init_app(app)
-jwt = JWTManager(app)
-mail.init_app(app)
-db.init_app(app)
-migrate = Migrate(app, db)
-
-
-CORS(app, resources={r"/api/*": {"origins": "*"}})
-app.config["JWT_SECRET_KEY"] = "shsuy3y9e8hhw##4tlytyskb}{FG{}}"
-
-app.register_blueprint(app_views)
-
-scheduler = BackgroundScheduler(
-    executors={"default": ThreadPoolExecutor(max_workers=6)}
-)
-scheduler.start()
-stop_event = Event()
 # Initialize colorama
 init(autoreset=True)
-
-
-def add_token_to_blocklist(jti, expires_in):
-    jwt_redis_blocklist.setex(jti, expires_in, "true")
-
-
-@jwt.token_in_blocklist_loader
-def check_if_token_in_blocklist(jwt_header, jwt_payload):
-    jti = jwt_payload["jti"]
-    token_in_redis = jwt_redis_blocklist.get(jti)
-    return token_in_redis is not None
-
-
-# Error handlers
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_payload):
-    token_type = jwt_payload["type"]
-    if token_type == "access":
-        return (
-            jsonify(
-                {
-                    "error": "ACCESS_TOKEN_EXPIRED",
-                    "message": "The access token has expired. Please refresh your token.",
-                }
-            ),
-            401,
-        )
-    elif token_type == "refresh":
-        return (
-            jsonify(
-                {
-                    "error": "REFRESH_TOKEN_EXPIRED",
-                    "message": "The refresh token has expired. Please log in again.",
-                }
-            ),
-            401,
-        )
-
-
-@jwt.invalid_token_loader
-def invalid_token_callback(error):
-    return (
-        jsonify(
-            {
-                "error": "INVALID_TOKEN",
-                "message": f"The token is invalid. Please log in again. {error}",
-            }
-        ),
-        401,
-    )
-
-
-@jwt.revoked_token_loader
-def revoked_token_callback(jwt_header, jwt_payload):
-    token_type = jwt_payload["type"]
-    return (
-        jsonify(
-            {
-                "error": f"{token_type.upper()}_TOKEN_REVOKED",
-                "message": f"The {token_type} token has been revoked.",
-            }
-        ),
-        401,
-    )
-
-
-@app.route("/logout", methods=["DELETE"])
-@jwt_required()
-def logout():
-    jti = get_jwt()["jti"]
-    expires_in = get_jwt()["exp"] - get_jwt()["iat"]
-    add_token_to_blocklist(jti, expires_in)
-    return jsonify({"message": "User successfully logged out"}), 200
 
 
 def log_message(message, color):
@@ -154,20 +41,14 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
 
 
 def check_medications():
-
     with app.app_context():
-        now = datetime.utcnow() + timedelta(hours=1)
-        now = now.time()
+        now = datetime.utcnow().time()  # Get current UTC time
+        now = now + timedelta(hours=1)
 
         log_message("Checking medications for emails...", Fore.YELLOW)
 
         medications = Medication.query.filter(
-            (Medication.time <= now)
-            & ((Medication.status == "upcoming") | (Medication.status == "ongoing"))
-            & (
-                (Medication.last_sent.is_(None))
-                | (Medication.last_sent != date.today())
-            )
+            (Medication.time <= now) & (Medication.status == "upcoming")
         ).all()
 
         for medication in medications:
@@ -198,13 +79,12 @@ def check_medications():
                     subject=f"Time to Take Your Medication: {medication.name}",
                     body=email_body,
                     footer="Stay healthy and keep smiling! Remember, laughter is the best medicine, but don't skip the actual medicine! 😂\n\nBest regards,\nThe HealthCare Team",
-                    current_year=datetime.now().year,
+                    current_year=datetime.datetime.now().year,
                 )
 
                 # Update medication status to 'ongoing' and decrement count_left
                 medication.status = "ongoing"
                 medication.count_left -= 1
-                medication.last_sent = date.today()
 
                 # If count_left reaches zero, send a congratulatory email
                 if medication.count_left == 0:
@@ -225,10 +105,8 @@ def check_medications():
                         subject=f"Congrats on Completing Your Medication: {medication.name}!",
                         body=congratulatory_email_body,
                         footer="Keep up the great work, and remember, taking care of yourself is a lifelong adventure! 🏆\n\nBest regards,\nThe HealthCare Team",
-                        current_year=datetime.now().year,
+                        current_year=datetime.datetime.now().year,
                     )
-                    medication.status = "completed"
-                    medication.last_sent = date.today()
 
                 db.session.commit()
 
@@ -280,7 +158,7 @@ def check_appointments():
                         subject="Upcoming Appointment Reminder",
                         body=email_body,
                         footer="Looking forward to seeing you soon!\nPlease arrive 10 minutes before your scheduled time. If you have any questions or need to reschedule, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
-                        current_year=datetime.now().year,
+                        current_year=datetime.datetime.now().year,
                     )
 
             # If the appointment is ongoing and status is still 'Upcoming'
@@ -306,7 +184,7 @@ def check_appointments():
                     action_text="Join The Meeting",
                     footer="We hope to see you soon!\nIf you have any questions or need assistance during your appointment, please feel free to contact us.\n\n"
                     "Best regards,\nThe HealthCare Team",
-                    current_year=datetime.now().year,
+                    current_year=datetime.datetime.now().year,
                 )
 
             # If the appointment is finished and the status is not 'Completed'
@@ -336,7 +214,7 @@ def check_appointments():
                     subject="Appointment Completed",
                     body=email_body,
                     footer="We hope your appointment went well! If you have any questions or need additional help, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
-                    current_year=datetime.now().year,
+                    current_year=datetime.datetime.now().year,
                 )
 
             elif now > appointment.end_time and appointment.status == "Notified":
@@ -368,29 +246,10 @@ def check_appointments():
                     action_text="Reschedule Your Appointment",
                     body=email_body,
                     footer="We'd love to help you get back on track. Please use the link above to reschedule. If you need assistance, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
-                    current_year=datetime.now().year,
+                    current_year=datetime.datetime.now().year,
                 )
 
             db.session.commit()
 
 
 # Scheduler to check appointments every minute
-
-swagger = Swagger(app, template_file="swagger_doc.yaml")
-
-# Scheduler to check appointments and medications
-scheduler.add_job(func=check_appointments, trigger="interval", seconds=90)
-scheduler.add_job(func=check_medications, trigger="interval", seconds=60)
-
-# Scheduler setup
-
-
-if __name__ == "__main__":
-    """Main Function"""
-    with app.app_context():
-        from datetime import datetime
-
-        db.create_all()
-    host = environ.get("HBNB_API_HOST", "0.0.0.0")
-    port = environ.get("HBNB_API_PORT", "5000")
-    app.run(host=host, port=port, threaded=True, debug=True)
