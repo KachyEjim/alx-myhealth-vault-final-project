@@ -1,13 +1,236 @@
 swagger: "2.0"
 info:
-  description: "API for managing patients appointments and medical records."
-  version: "1.0.0"
-  title: "Patient Management  API"
+  description: |
+    # API Documentation
 
-basePath: /api
+    Welcome to the API documentation for our healthcare management system. This API allows developers to interact with various resources related to appointments, users, medical records, and medications. It follows industry standards and utilizes JSON Web Tokens (JWT) for secure authentication.
+
+    ## How to Use the API
+
+    To interact with the API, follow these steps:
+
+    1. **Authentication**:
+       - The API uses JWT for authentication. To access protected routes, you must first obtain a JWT by logging in with your credentials.
+       - **Login Endpoint**: Send a POST request to the `/api/login` endpoint with your email and password in the request body. Upon successful login, the API will return a JWT, which you need to include in the `Authorization` header of your requests to access protected resources.
+       - **Example Login Request**:
+         ```http
+         POST /api/login
+         Content-Type: application/json
+
+         {
+           "email": "user@example.com",
+           "password": "yourpassword"
+         }
+         ```
+
+       - **Example Successful Login Response**:
+         ```json
+         {
+           "access_token": "your_jwt_token",
+           "refresh_token": "your_refresh_token"
+         }
+         ```
+
+    2. **Authorization**:
+       - Include the JWT in the `Authorization` header of your requests as follows:
+         ```
+         Authorization: Bearer your_jwt_token_here
+         ```
+
+    3. **Making API Requests**:
+       - All requests should be made to the base URL: `https://myhealthvault-backend.onrender.com`.
+       - Use the appropriate HTTP methods (GET, POST, PUT, DELETE) as specified for each endpoint.
+       - The API supports JSON format for requests and responses.
+
+    ## Available Endpoints
+
+    Here is a list of all API endpoints along with descriptions and how to call them:
+
+    ### 1. **Authentication**
+
+    - **Login**  
+      **POST** `/api/login`  
+      Authenticates a user and returns a JWT.  
+      **Request Body**:
+      ```json
+      {
+        "email": "user@example.com",
+        "password": "yourpassword"
+      }
+      ```
+
+    ### 2. **User Management**
+
+    - **Create User**  
+      **POST** `/api/users`  
+      Registers a new user in the system.  
+      **Request Body**:
+      ```json
+      {
+        "full_name": "John Doe",
+        "email": "john@example.com",
+        "password": "securepassword",
+        "phone_number": "1234567890",
+        "gender": "male",
+        "address": "123 Main St",
+        "age": 30
+      }
+      ```
+
+    - **Get User Details**  
+      **GET** `/api/users/{id}`  
+      Retrieves the details of a user by their ID.  
+      **Authorization**: Requires a valid JWT.  
+      **Example Request**:  
+      ```http
+      GET /api/users/1
+      Authorization: Bearer your_jwt_token_here
+      ```
+
+    - **Update User**  
+      **PUT** `/api/users/{id}`  
+      Updates user information.  
+      **Authorization**: Requires a valid JWT.  
+      **Request Body**:
+      ```json
+      {
+        "full_name": "Jane Doe",
+        "email": "jane@example.com",
+        "phone_number": "0987654321",
+        "address": "456 Side St"
+      }
+      ```
+
+    - **Delete User**  
+      **DELETE** `/api/users/{id}`  
+      Deletes a user from the system.  
+      **Authorization**: Requires a valid JWT.
+
+    ### 3. **Appointments**
+
+    - **Create Appointment**  
+      **POST** `/api/appointments`  
+      Creates a new appointment for a user.  
+      **Request Body**:
+      ```json
+      {
+        "user_id": "1",
+        "doctor_id": "2",
+        "start_time": "2024-10-26T10:00:00Z",
+        "end_time": "2024-10-26T11:00:00Z",
+        "description": "Checkup appointment"
+      }
+      ```
+
+    - **Get Appointments**  
+      **GET** `/api/appointments`  
+      Retrieves all appointments for the authenticated user.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Get Appointment by ID**  
+      **GET** `/api/appointments/{id}`  
+      Retrieves a specific appointment by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Update Appointment**  
+      **PUT** `/api/appointments/{id}`  
+      Updates an existing appointment.  
+      **Authorization**: Requires a valid JWT.  
+      **Request Body**:
+      ```json
+      {
+        "description": "Updated description"
+      }
+      ```
+
+    - **Delete Appointment**  
+      **DELETE** `/api/appointments/{id}`  
+      Deletes an appointment by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+    ### 4. **Medical Records**
+
+    - **Create Medical Record**  
+      **POST** `/api/medical_records`  
+      Creates a new medical record.  
+      **Request Body**:
+      ```json
+      {
+        "record_name": "X-ray results",
+        "health_care_provider": "City Hospital",
+        "type_of_record": "Radiology",
+        "diagnosis": "Fractured leg",
+        "notes": "Patient advised to rest",
+        "file_path": "/files/record123.pdf",
+        "status": "final",
+        "practitioner_name": "Dr. John Doe"
+      }
+      ```
+
+    - **Get Medical Records**  
+      **GET** `/api/medical_records`  
+      Retrieves all medical records for the authenticated user.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Get Medical Record by ID**  
+      **GET** `/api/medical_records/{id}`  
+      Retrieves a specific medical record by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Update Medical Record**  
+      **PUT** `/api/medical_records/{id}`  
+      Updates an existing medical record.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Delete Medical Record**  
+      **DELETE** `/api/medical_records/{id}`  
+      Deletes a medical record by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+    ### 5. **Medications**
+
+    - **Create Medication**  
+      **POST** `/api/medications`  
+      Creates a new medication entry.  
+      **Request Body**:
+      ```json
+      {
+        "name": "Aspirin",
+        "when": "2024-10-16",
+        "time": "08:00",
+        "status": "active"
+      }
+      ```
+
+    - **Get Medications**  
+      **GET** `/api/medications`  
+      Retrieves all medications for the authenticated user.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Get Medication by ID**  
+      **GET** `/api/medications/{id}`  
+      Retrieves a specific medication by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Update Medication**  
+      **PUT** `/api/medications/{id}`  
+      Updates an existing medication entry.  
+      **Authorization**: Requires a valid JWT.
+
+    - **Delete Medication**  
+      **DELETE** `/api/medications/{id}`  
+      Deletes a medication entry by its ID.  
+      **Authorization**: Requires a valid JWT.
+
+  version: "1.0.0"
+  title: "Patient Management API"
+
+host: "myhealthvault-backend.onrender.com"
+basePath: "/api"
 schemes:
   - https
   - http
+
 paths:
   /signup:
     post:
@@ -106,169 +329,19 @@ paths:
                 type: string
                 example: "An unexpected error occurred."
 
-/login:
-  post:
-    tags:
-      - "UserAuth"
-    summary: "User login"
-    description: |
-      Authenticates a user by verifying their email and password. 
-      Returns access and refresh tokens if successful.
-    parameters:
-      - in: body
-        name: body
-        required: true
-        description: "Login credentials."
-        schema:
-          type: object
-          properties:
-            email:
-              type: string
-              example: "john.doe@example.com"
-              description: "User's email address."
-            password:
-              type: string
-              example: "your_secure_password"
-              description: "User's password."
-    responses:
-      200:
-        description: "Login successful."
-        schema:
-          type: object
-          properties:
-            msg:
-              type: string
-              example: "Login successful."
-              description: "Success message."
-            status:
-              type: boolean
-              example: true
-              description: "Indicates whether the login was successful."
-            statusCode:
-              type: integer
-              example: 200
-              description: "HTTP status code for successful login."
-            access_token:
-              type: string
-              example: "access_token_here"
-              description: "Access token for authorized requests."
-            refresh_token:
-              type: string
-              example: "refresh_token_here"
-              description: "Refresh token for renewing access."
-            user:
-              type: object
-              properties:
-                id:
-                  type: integer
-                  example: 1
-                  description: "User ID."
-                email:
-                  type: string
-                  example: "john.doe@example.com"
-                  description: "User's email address."
-                role:
-                  type: string
-                  example: "user"
-                  description: "User's role."
-      401:
-        description: "Invalid email or password."
-        schema:
-          type: object
-          properties:
-            error:
-              type: string
-              example: "INVALID_CREDENTIALS"
-              description: "Error code for invalid credentials."
-            status:
-              type: boolean
-              example: false
-              description: "Indicates whether the login was successful."
-            statusCode:
-              type: integer
-              example: 401
-              description: "HTTP status code for invalid credentials."
-            msg:
-              type: string
-              example: "Invalid email or password."
-              description: "Error message for invalid credentials."
-      403:
-        description: "User not verified."
-        schema:
-          type: object
-          properties:
-            error:
-              type: string
-              example: "USER_NOT_VERIFIED"
-              description: "Error code for unverified users."
-            status:
-              type: boolean
-              example: false
-              description: "Indicates whether the login was successful."
-            statusCode:
-              type: integer
-              example: 403
-              description: "HTTP status code for unverified users."
-            msg:
-              type: string
-              example: "Please verify your email before logging in."
-              description: "Error message for unverified users."
-      500:
-        description: "Internal server error."
-        schema:
-          type: object
-          properties:
-            error:
-              type: string
-              example: "INTERNAL_SERVER_ERROR"
-              description: "Error code for internal server errors."
-            status:
-              type: boolean
-              example: false
-              description: "Indicates whether the login was successful."
-            statusCode:
-              type: integer
-              example: 500
-              description: "HTTP status code for server error."
-            msg:
-              type: string
-              example: "An unexpected error occurred."
-              description: "Error message for unexpected server errors."
-
-  /verify-email/{token}:
-    get:
-      tags:
-        - "UserAuth"
-      summary: "Verify user's email"
-      description: |
-        Verifies the user's email using the provided JWT token.
-      parameters:
-        - in: path
-          name: token
-          required: true
-          type: string
-          description: "JWT token used for email verification."
-      responses:
-        200:
-          description: "Email verified successfully."
-        400:
-          description: "Invalid or expired token."
-        404:
-          description: "User not found."
-        500:
-          description: "Internal server error."
-
-  /resend-verification:
+  /login:
     post:
       tags:
         - "UserAuth"
-      summary: "Resend email verification"
-      description: "Resends the email verification link to the provided email address."
+      summary: "User login"
+      description: |
+        Authenticates a user by verifying their email and password. 
+        Returns access and refresh tokens if successful.
       parameters:
         - in: body
           name: body
           required: true
-          description: "Email address to resend verification to."
+          description: "Login credentials."
           schema:
             type: object
             properties:
@@ -276,13 +349,332 @@ paths:
                 type: string
                 example: "john.doe@example.com"
                 description: "User's email address."
+              password:
+                type: string
+                example: "your_secure_password"
+                description: "User's password."
+      responses:
+        200:
+          description: "Login successful."
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Login successful."
+                description: "Success message."
+              status:
+                type: boolean
+                example: true
+                description: "Indicates whether the login was successful."
+              statusCode:
+                type: integer
+                example: 200
+                description: "HTTP status code for successful login."
+              access_token:
+                type: string
+                example: "access_token_here"
+                description: "Access token for authorized requests."
+              refresh_token:
+                type: string
+                example: "refresh_token_here"
+                description: "Refresh token for renewing access."
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                    description: "User ID."
+                  email:
+                    type: string
+                    example: "john.doe@example.com"
+                    description: "User's email address."
+                  role:
+                    type: string
+                    example: "user"
+                    description: "User's role."
+        401:
+          description: "Invalid email or password."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INVALID_CREDENTIALS"
+                description: "Error code for invalid credentials."
+              status:
+                type: boolean
+                example: false
+                description: "Indicates whether the login was successful."
+              statusCode:
+                type: integer
+                example: 401
+                description: "HTTP status code for invalid credentials."
+              msg:
+                type: string
+                example: "Invalid email or password."
+                description: "Error message for invalid credentials."
+        403:
+          description: "User not verified."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "USER_NOT_VERIFIED"
+                description: "Error code for unverified users."
+              status:
+                type: boolean
+                example: false
+                description: "Indicates whether the login was successful."
+              statusCode:
+                type: integer
+                example: 403
+                description: "HTTP status code for unverified users."
+              msg:
+                type: string
+                example: "Please verify your email before logging in."
+                description: "Error message for unverified users."
+        500:
+          description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+                description: "Error code for internal server errors."
+              status:
+                type: boolean
+                example: false
+                description: "Indicates whether the login was successful."
+              statusCode:
+                type: integer
+                example: 500
+                description: "HTTP status code for server error."
+              msg:
+                type: string
+                example: "An unexpected error occurred."
+                description: "Error message for unexpected server errors."
+
+  /verify-email/{token}:
+    get:
+      tags:
+        - "UserAuth"
+      summary: "Verify user's email"
+      description: "Verifies the user's email using the provided JWT token."
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+          description: "JWT token used for email verification."
+      responses:
+        200:
+          description: "Email verified successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  msg:
+                    type: string
+        400:
+          description: "Invalid or expired token."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  error:
+                    type: string
+                  msg:
+                    type: string
+        404:
+          description: "User not found."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  error:
+                    type: string
+                  msg:
+                    type: string
+        500:
+          description: "Internal server error."
+
+  /resend-verification:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Resend verification email"
+      description: "Resends the email verification link to the user."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "Email address of the user"
       responses:
         200:
           description: "Verification email resent successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  msg:
+                    type: string
+        404:
+          description: "User not found."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  error:
+                    type: string
+                  msg:
+                    type: string
         400:
-          description: "Email address not found."
+          description: "User already verified."
+
+  /reset-password/{token}:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Reset user password"
+      description: "Resets the user's password using the provided JWT token."
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+          description: "JWT token for password reset."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                new_password:
+                  type: string
+                  description: "New password for the user."
+      responses:
+        200:
+          description: "Password reset successful."
+        400:
+          description: "Invalid or expired token."
+        404:
+          description: "User not found."
         500:
           description: "Internal server error."
+
+  /forgot-password:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Forgot password"
+      description: "Sends a password reset link to the user's email."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "User's email address"
+      responses:
+        200:
+          description: "Password reset email sent."
+        404:
+          description: "User not found."
+        400:
+          description: "Email is required."
+
+  /change-password:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Change user password"
+      description: "Allows a logged-in user to change their password."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                  description: "Current password"
+                new_password:
+                  type: string
+                  description: "New password"
+      responses:
+        200:
+          description: "Password changed successfully."
+        401:
+          description: "Old password is incorrect."
+        400:
+          description: "Old and new passwords are required."
+
+  /refresh:
+    post:
+      tags:
+        - "UserAuth"
+      summary: "Refresh access token"
+      description: "Refreshes the user's access token."
+      responses:
+        200:
+          description: "Access token refreshed."
+        401:
+          description: "Token is invalid or expired."
+
+  /join_appointment/{appointment_id}:
+    get:
+      tags:
+        - "Appointment"
+      summary: "Join appointment"
+      description: "Allows the user to join an appointment if it's currently ongoing."
+      parameters:
+        - in: path
+          name: appointment_id
+          required: true
+          schema:
+            type: string
+          description: "ID of the appointment to join."
+      responses:
+        302:
+          description: "Redirect to appointment URL."
+        404:
+          description: "Appointment not found."
+        400:
+          description: "Invalid appointment status."
+        500:
+          description: "Internal server error."
+
   /create_appointment/{user_id}:
     post:
       tags:
@@ -295,42 +687,43 @@ paths:
         - in: path
           name: user_id
           required: true
-          type: string
+          schema:
+            type: string
           description: "ID of the user for whom the appointment is being created."
         - in: body
           name: body
           required: true
           description: "Details of the appointment to be created."
-          schema:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-                example: "2024-10-15T14:00:00"
-                description: "Start time of the appointment in ISO 8601 format."
-              end_time:
-                type: string
-                format: date-time
-                example: "2024-10-15T15:00:00"
-                description: "End time of the appointment in ISO 8601 format."
-              description:
-                type: string
-                example: "General consultation"
-                description: "Brief description of the appointment."
-              doctor_id:
-                type: integer
-                example: 2
-                description: "ID of the doctor assigned to the appointment."
-              status:
-                type: string
-                example: "pending"
-                description: "Current status of the appointment."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_time:
+                    type: string
+                    format: date-time
+                    example: "2024-10-15T14:00:00"
+                    description: "Start time of the appointment in ISO 8601 format."
+                  end_time:
+                    type: string
+                    format: date-time
+                    example: "2024-10-15T15:00:00"
+                    description: "End time of the appointment in ISO 8601 format."
+                  description:
+                    type: string
+                    example: "General consultation"
+                    description: "Brief description of the appointment."
+                  doctor_id:
+                    type: integer
+                    example: 2
+                    description: "ID of the doctor assigned to the appointment."
       responses:
         201:
           description: "Appointment successfully created."
-          schema:
-            $ref: "#/definitions/Appointment"
+          content:
+            application/json:
+              schema:
+                $ref: "#/definitions/Appointment"
         400:
           description: "Bad Request: Missing required fields or no input data found."
         404:
@@ -340,42 +733,52 @@ paths:
       security:
         - jwt: []
 
-  /user_appointments/{user_id}:
+  /get_appointments/{user_id}:
     get:
       tags:
         - "Appointment"
       summary: "Retrieve appointments for a user"
       description: |
-        Fetches appointments for a specific user with optional sorting 
-        and limit filters.
+        Fetches appointments for a specific user, with optional filters such as start time, end time, status, and doctor ID.
       parameters:
         - in: path
           name: user_id
           required: true
-          type: string
+          schema:
+            type: string
           description: "ID of the user whose appointments are being retrieved."
         - in: query
-          name: limit
-          type: integer
-          description: "Limit the number of results. Default is 10."
+          name: start_time
+          schema:
+            type: string
+            format: date-time
+          description: "Filter by the starting time of the appointment."
         - in: query
-          name: sort_by
-          type: string
-          default: "appointment_date"
-          description: "Field to sort appointments by. Default is appointment_date."
+          name: end_time
+          schema:
+            type: string
+            format: date-time
+          description: "Filter by the ending time of the appointment."
         - in: query
-          name: sort_order
-          type: string
-          enum: [asc, desc]
-          default: "desc"
-          description: "Sorting order for appointments: 'asc' or 'desc'."
+          name: status
+          schema:
+            type: string
+            enum: ["Upcoming", "Completed", "Missed", "Canceled"]
+          description: "Filter by the status of the appointment."
+        - in: query
+          name: doctor_id
+          schema:
+            type: integer
+          description: "Filter by doctor ID."
       responses:
         200:
           description: "List of user appointments."
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Appointment"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/definitions/Appointment"
         404:
           description: "User not found or no appointments available."
         500:
@@ -395,45 +798,47 @@ paths:
         - in: path
           name: appointment_id
           required: true
-          type: integer
+          schema:
+            type: integer
           description: "ID of the appointment to be updated."
         - in: body
           name: body
           required: true
           description: "Updated appointment details."
-          schema:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-                example: "2024-10-16T15:00:00"
-                description: "New start time of the appointment in ISO 8601 format."
-              end_time:
-                type: string
-                format: date-time
-                example: "2024-10-16T16:00:00"
-                description: "New end time of the appointment in ISO 8601 format."
-              description:
-                type: string
-                example: "Updated appointment description"
-                description: "Updated description of the appointment."
-              doctor_id:
-                type: integer
-                description: "Updated ID of the doctor assigned to the appointment."
-              status:
-                type: string
-                example: "confirmed"
-                description: "Updated status of the appointment."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  start_time:
+                    type: string
+                    format: date-time
+                    example: "2024-10-16T15:00:00"
+                    description: "New start time of the appointment in ISO 8601 format."
+                  end_time:
+                    type: string
+                    format: date-time
+                    example: "2024-10-16T16:00:00"
+                    description: "New end time of the appointment in ISO 8601 format."
+                  description:
+                    type: string
+                    example: "Updated appointment description"
+                    description: "Updated description of the appointment."
+                  doctor_id:
+                    type: integer
+                    example: 2
+                    description: "Updated ID of the doctor assigned to the appointment."
       responses:
         200:
           description: "Appointment successfully updated."
-          schema:
-            $ref: "#/definitions/Appointment"
-        404:
-          description: "Appointment not found."
+          content:
+            application/json:
+              schema:
+                $ref: "#/definitions/Appointment"
         400:
           description: "No input data found."
+        404:
+          description: "Appointment not found."
         500:
           description: "Internal Server Error."
       security:
@@ -449,7 +854,8 @@ paths:
         - in: path
           name: appointment_id
           required: true
-          type: integer
+          schema:
+            type: integer
           description: "ID of the appointment to be deleted."
       responses:
         200:
@@ -460,82 +866,13 @@ paths:
           description: "Internal Server Error."
       security:
         - jwt: []
-  /appointments:
-    get:
-      tags:
-        - "Appointment"
-      summary: "Retrieve appointments"
-      description: "Fetch a list of appointments with optional filtering by status."
-      parameters:
-        - in: query
-          name: user_id
-          required: false
-          description: "ID of the user whose appointments are being retrieved."
-          type: integer
-        - in: query
-          name: status
-          required: false
-          description: "Filter appointments by status (upcoming, completed, missed, canceled)."
-          type: string
-          enum:
-            - upcoming
-            - completed
-            - missed
-            - canceled
-        - in: query
-          name: limit
-          required: false
-          description: "Limit the number of results returned."
-          type: integer
-        - in: query
-          name: sort_by
-          required: false
-          description: "Field to sort results by (e.g., start_time, status)."
-          type: string
-        - in: query
-          name: sort_order
-          required: false
-          description: "Sorting order: 'asc' or 'desc'."
-          type: string
-          enum:
-            - asc
-            - desc
-      responses:
-        200:
-          description: "List of appointments retrieved successfully."
-          schema:
-            type: array
-            items:
-              $ref: "#/definitions/Appointment"
-        404:
-          description: "User not found."
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "USER_NOT_FOUND"
-              message:
-                type: string
-                example: "User not found."
-        500:
-          description: "Internal server error."
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "INTERNAL_SERVER_ERROR"
-              message:
-                type: string
-                example: "An unexpected error occurred."
 
   /create_record/{user_id}:
     post:
       tags:
         - "MedicalRecords"
       summary: "Create a new medical record"
-      description: "Creates a new medical record for a specified user."
+      description: "Creates a new medical record for a specified user with optional file attachment."
       parameters:
         - name: user_id
           in: path
@@ -543,140 +880,237 @@ paths:
           description: "ID of the user for whom the medical record is being created."
           schema:
             type: string
-        - in: body
-          name: body
+        - in: formData
+          name: record_name
           required: true
-          description: "Details of the medical record to be created."
+          description: "Name of the medical record."
           schema:
-            type: object
-            properties:
-              record_name:
-                type: string
-                description: "Name of the medical record."
-                example: "Blood Test"
-              health_care_provider:
-                type: string
-                description: "Name of the healthcare provider."
-                example: "Dr. Smith"
-              type_of_record:
-                type: string
-                description: "Type of medical record."
-                example: "Lab Report"
-              diagnosis:
-                type: string
-                description: "Diagnosis details."
-                example: "Anemia"
-              notes:
-                type: string
-                description: "Additional notes."
-                example: "Follow up in 2 weeks."
-              file_path:
-                type: string
-                description: "File path to any attached document."
-                example: "/path/to/document.pdf"
-              status:
-                type: string
-                description: "Status of the record."
-                example: "draft"
-              practitioner_name:
-                type: string
-                description: "Name of the practitioner."
-                example: "Dr. Jane Doe"
+            type: string
+            example: "Blood Test"
+        - in: formData
+          name: health_care_provider
+          required: true
+          description: "Name of the healthcare provider."
+          schema:
+            type: string
+            example: "Dr. Smith"
+        - in: formData
+          name: type_of_record
+          required: true
+          description: "Type of medical record."
+          schema:
+            type: string
+            example: "Lab Report"
+        - in: formData
+          name: diagnosis
+          description: "Diagnosis details."
+          schema:
+            type: string
+            example: "Anemia"
+        - in: formData
+          name: notes
+          description: "Additional notes."
+          schema:
+            type: string
+            example: "Follow up in 2 weeks."
+        - in: formData
+          name: status
+          description: "Status of the record."
+          schema:
+            type: string
+            example: "draft"
+        - in: formData
+          name: practitioner_name
+          description: "Name of the practitioner."
+          schema:
+            type: string
+            example: "Dr. Jane Doe"
+        - in: formData
+          name: file
+          description: "File attachment for the medical record."
+          required: false
+          schema:
+            type: string
+            format: binary
       responses:
         "201":
           description: "Medical record created successfully."
-          schema:
-            type: object
-            properties:
-              record_id:
-                type: integer
-                example: 123
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    example: "Medical Records successfully created"
+                  status:
+                    type: boolean
+                    example: true
+                  statusCode:
+                    type: integer
+                    example: 201
+                  data:
+                    type: object
+                    properties:
+                      record_id:
+                        type: integer
+                        example: 123
         "400":
           description: "Bad request. Invalid or missing input data."
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "BAD_REQUEST"
-              message:
-                type: string
-                example: "Record name is required."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "BAD_REQUEST"
+                  msg:
+                    type: string
+                    example: "Record name is required."
+                  status:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 400
         "404":
           description: "User not found."
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "USER_NOT_FOUND"
-              message:
-                type: string
-                example: "User not found."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "USER_NOT_FOUND"
+                  msg:
+                    type: string
+                    example: "User not found."
+                  status:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 404
         "500":
           description: "Internal server error."
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "INTERNAL_SERVER_ERROR"
-              message:
-                type: string
-                example: "An unexpected error occurred."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  msg:
+                    type: string
+                    example: "An unexpected error occurred."
+                  status:
+                    type: boolean
+                    example: false
+                  statusCode:
+                    type: integer
+                    example: 500
 
   /user_records/{user_id}:
     get:
       tags:
         - "MedicalRecords"
-      summary: "Get user's medical records"
-      description: "Retrieves a list of medical records for a specified user."
+      summary: "Get medical records for a user"
+      description: "Retrieves all medical records for a specified user. Supports filtering, sorting, and limiting results."
       parameters:
         - name: user_id
           in: path
           required: true
-          description: "ID of the user whose medical records are being retrieved."
+          description: "ID of the user for whom medical records are being retrieved."
           schema:
             type: string
-        - name: limit
-          in: query
+        - in: query
+          name: limit
           required: false
-          description: "Limit the number of results returned."
+          description: "Maximum number of records to retrieve."
           schema:
             type: integer
-        - name: sort_by
-          in: query
+        - in: query
+          name: sort_by
           required: false
-          description: "Field to sort results by (e.g., record_name, diagnosis)."
+          description: "Field by which to sort the records."
           schema:
             type: string
-        - name: sort_order
-          in: query
+            example: "last_added"
+        - in: query
+          name: sort_order
           required: false
-          description: "Sorting order: 'asc' or 'desc'."
+          description: "Order of sorting, either asc (ascending) or desc (descending)."
           schema:
             type: string
-            enum:
-              - asc
-              - desc
+            enum: [asc, desc]
+            example: "desc"
+        - in: query
+          name: record_name
+          required: false
+          description: "Filter by record name (case-insensitive)."
+          schema:
+            type: string
+        - in: query
+          name: type_of_record
+          required: false
+          description: "Filter by type of record."
+          schema:
+            type: string
+        - in: query
+          name: diagnosis
+          required: false
+          description: "Filter by diagnosis details."
+          schema:
+            type: string
       responses:
         "200":
-          description: "List of medical records retrieved successfully."
+          description: "Medical records retrieved successfully."
           schema:
-            type: array
-            items:
-              $ref: "#/definitions/MedicalRecord"
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Medical Records successfully retrieved"
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    record_id:
+                      type: integer
+                      example: 123
+                    record_name:
+                      type: string
+                      example: "Blood Test"
+                    health_care_provider:
+                      type: string
+                      example: "Dr. Smith"
+                    type_of_record:
+                      type: string
+                      example: "Lab Report"
+                    diagnosis:
+                      type: string
+                      example: "Anemia"
+                    notes:
+                      type: string
+                      example: "Follow up in 2 weeks."
+                    status:
+                      type: string
+                      example: "draft"
         "404":
-          description: "User not found."
+          description: "User or records not found."
           schema:
             type: object
             properties:
               error:
                 type: string
-                example: "USER_NOT_FOUND"
+                example: "USER_NOT_FOUND or NO_RECORDS_FOUND"
               message:
                 type: string
-                example: "User not found."
+                example: "No records found for this user."
         "500":
           description: "Internal server error."
           schema:
@@ -693,82 +1127,239 @@ paths:
     put:
       tags:
         - "MedicalRecords"
-      summary: "Update a medical record"
-      description: "Updates the details of an existing medical record."
+      summary: "Update an existing medical record"
+      description: "Updates the details of a specific medical record identified by record ID."
       parameters:
         - name: record_id
           in: path
           required: true
-          description: "ID of the medical record to be updated."
+          description: "ID of the medical record to update."
           schema:
-            type: integer
+            type: string
         - in: body
           name: body
           required: true
-          description: "Updated medical record details."
+          description: "Updated details of the medical record."
           schema:
             type: object
             properties:
               record_name:
                 type: string
                 description: "Updated name of the medical record."
+                example: "Updated Blood Test"
               health_care_provider:
                 type: string
                 description: "Updated name of the healthcare provider."
+                example: "Dr. John Doe"
               type_of_record:
                 type: string
                 description: "Updated type of medical record."
+                example: "Radiology"
               diagnosis:
                 type: string
                 description: "Updated diagnosis details."
+                example: "No significant findings."
               notes:
                 type: string
-                description: "Updated additional notes."
-              file_path:
-                type: string
-                description: "Updated file path to any attached document."
+                description: "Additional notes."
+                example: "Next check-up in a month."
               status:
                 type: string
                 description: "Updated status of the record."
+                example: "final"
               practitioner_name:
                 type: string
                 description: "Updated name of the practitioner."
+                example: "Dr. Jane Doe"
       responses:
         "200":
           description: "Medical record updated successfully."
-        "404":
-          description: "Medical record not found."
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Medical Record successfully updated"
+              data:
+                type: object
+                properties:
+                  record_id:
+                    type: integer
+                    example: 123
+                  record_name:
+                    type: string
+                    example: "Updated Blood Test"
         "400":
-          description: "Bad request. Invalid or missing input data."
+          description: "Bad request due to invalid or missing input data."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "BAD_REQUEST"
+              message:
+                type: string
+                example: "Record name is required."
+        "404":
+          description: "Record not found."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "RECORD_NOT_FOUND"
+              message:
+                type: string
+                example: "Medical record not found."
         "500":
           description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              message:
+                type: string
+                example: "An unexpected error occurred."
 
   /delete_record/{record_id}:
     delete:
       tags:
         - "MedicalRecords"
-      summary: "Delete a medical record"
-      description: "Deletes a medical record by its ID."
+      summary: "Delete a specific medical record"
+      description: "Deletes a medical record identified by the given record ID. Also deletes any associated files from Firebase, if applicable."
       parameters:
         - name: record_id
           in: path
           required: true
           description: "ID of the medical record to be deleted."
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: "Medical record deleted successfully."
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "Medical record 123 successfully deleted!"
+              status:
+                type: boolean
+                example: true
+              statusCode:
+                type: integer
+                example: 200
         "404":
           description: "Medical record not found."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "RECORD_NOT_FOUND"
+              msg:
+                type: string
+                example: "Medical record not found."
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 404
         "500":
           description: "Internal server error."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 500
+              msg:
+                type: string
+                example: "An unexpected error occurred."
+
+  /delete_file:
+    delete:
+      tags:
+        - "Files"
+      summary: "Delete a file from Firebase"
+      description: "Deletes a file from Firebase based on the provided file path."
+      parameters:
+        - in: body
+          name: body
+          required: true
+          description: "JSON payload containing the path of the file to delete."
+          schema:
+            type: object
+            properties:
+              file_path:
+                type: string
+                description: "Path of the file to delete."
+                example: "path/to/file.ext"
+      responses:
+        "200":
+          description: "File successfully deleted from Firebase."
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "File successfully deleted."
+              status:
+                type: boolean
+                example: true
+              statusCode:
+                type: integer
+                example: 200
+        "400":
+          description: "Bad request due to missing file path."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "BAD_REQUEST"
+              msg:
+                type: string
+                example: "File path is required."
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 400
+        "500":
+          description: "Internal server error during file deletion."
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_SERVER_ERROR"
+              msg:
+                type: string
+                example: "An unexpected error occurred."
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 500
+
   /user:
     get:
       tags:
         - "UserOperations"
       summary: Retrieve user information
-      description: Get user information by ID or email.
+      description: Get user information by ID or email. Returns user details if found.
       parameters:
         - name: email
           in: query
@@ -792,7 +1383,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  user:
+                  status:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  data:
                     type: object
                     additionalProperties: true
         "400":
@@ -806,6 +1401,106 @@ paths:
                     type: string
                   message:
                     type: string
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+    post:
+      tags:
+        - "UserOperations"
+      summary: Retrieve user information
+      description: Use the POST method to retrieve user information by ID or email. Similar to the GET method.
+      parameters:
+        - name: email
+          in: query
+          required: false
+          description: Email of the user to retrieve.
+          schema:
+            type: string
+        - name: id
+          in: query
+          required: false
+          description: ID of the user to retrieve.
+          schema:
+            type: string
+      security:
+        - jwt: []
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  data:
+                    type: object
+                    additionalProperties: true
+        "400":
+          description: Missing criteria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+
+  /user/{user_id}:
+    get:
+      tags:
+        - "UserOperations"
+      summary: Retrieve specific user information
+      description: Get information about a specific user by user ID.
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: ID of the user to retrieve.
+          schema:
+            type: string
+      security:
+        - jwt: []
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  data:
+                    type: object
+                    additionalProperties: true
         "404":
           description: User not found
           content:
@@ -945,22 +1640,27 @@ paths:
     post:
       tags:
         - "UserOperations"
-      summary: Upload profile picture
+      summary: Upload a profile picture
       description: Upload a profile picture for the authenticated user.
       parameters:
         - name: user_id
           in: path
           required: true
-          description: ID of the user to upload the profile picture.
+          description: ID of the user to upload the profile picture for.
           schema:
             type: string
-        - name: image
-          in: formData
-          required: true
-          description: The image file to upload.
-          type: file
       security:
         - jwt: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
       responses:
         "200":
           description: Image uploaded successfully
@@ -970,17 +1670,28 @@ paths:
                 type: object
                 properties:
                   status:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  msg:
                     type: string
-                    example: "success"
-                  success:
+                  data:
                     type: string
-                    example: "true"
-                  message:
+        "400":
+          description: Invalid file or no file uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                  statusCode:
+                    type: integer
+                  error:
                     type: string
-                    example: "Image uploaded successfully."
-                  image_url:
+                  msg:
                     type: string
-                    example: "http://example.com/path/to/image.jpg"
         "403":
           description: Unauthorized action
           content:
@@ -992,34 +1703,18 @@ paths:
                     type: string
                   message:
                     type: string
-        "400":
-          description: Bad request
+        "404":
+          description: User not found
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
-                    type: string
-                    example: "error"
                   error:
                     type: string
                   message:
                     type: string
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "error"
-                  error:
-                    type: string
-                  message:
-                    type: string
+
   /save-medications:
     post:
       tags:
@@ -1027,7 +1722,7 @@ paths:
       summary: "Save medications for a user"
       description: |
         Saves a list of medications provided as a list of dictionaries for the authenticated user. 
-        Each medication must include the 'name', 'when', and 'time' fields.
+        Each medication must include the 'name', 'when', 'time', and 'count' fields.
       parameters:
         - in: body
           name: body
@@ -1050,6 +1745,10 @@ paths:
                   type: string
                   example: "08:00"
                   description: "Time when the medication should be taken."
+                count:
+                  type: integer
+                  example: 30
+                  description: "Count of the medication."
       responses:
         201:
           description: "Medications saved successfully."
@@ -1195,62 +1894,13 @@ paths:
                 type: string
                 example: "An unexpected error occurred."
 
-  /medications:
-    get:
-      tags:
-        - "Medications"
-      summary: "Get all medications for a user"
-      description: |
-        Retrieves all medications associated with the authenticated user.
-      responses:
-        200:
-          description: "Medications retrieved successfully."
-          schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: "SUCCESS"
-              medications:
-                type: array
-                items:
-                  $ref: "#/definitions/Medication"
-        404:
-          description: "No medications found."
-          schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: "ERROR"
-              error:
-                type: string
-                example: "NO_MEDICATIONS_FOUND"
-              message:
-                type: string
-                example: "No medications found."
-        500:
-          description: "Internal server error."
-          schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: "ERROR"
-              error:
-                type: string
-                example: "INTERNAL_SERVER_ERROR"
-              message:
-                type: string
-                example: "An unexpected error occurred."
-
   /update-medications/{med_id}:
     put:
       tags:
         - "Medications"
-      summary: "Update a specific medication"
+      summary: "Update a medication for a user"
       description: |
-        Updates the details of a specific medication for the authenticated user based on the provided medication ID.
+        Updates the details of a specific medication for the authenticated user.
       parameters:
         - in: path
           name: med_id
@@ -1267,19 +1917,23 @@ paths:
               name:
                 type: string
                 example: "Aspirin"
-                description: "Updated name of the medication."
+                description: "Name of the medication."
               when:
                 type: string
                 example: "2024-10-16"
-                description: "Updated date for taking the medication."
+                description: "Date when the medication should be taken."
               time:
                 type: string
-                example: "09:00"
-                description: "Updated time for taking the medication."
+                example: "08:00"
+                description: "Time when the medication should be taken."
               status:
                 type: string
                 example: "active"
-                description: "Updated status of the medication."
+                description: "Status of the medication."
+              count:
+                type: integer
+                example: 30
+                description: "Count of the medication."
       responses:
         200:
           description: "Medication updated successfully."
@@ -1289,9 +1943,6 @@ paths:
               status:
                 type: string
                 example: "SUCCESS"
-              message:
-                type: string
-                example: "Medication updated successfully!"
               medication:
                 $ref: "#/definitions/Medication"
         404:
@@ -1327,9 +1978,8 @@ paths:
     delete:
       tags:
         - "Medications"
-      summary: "Delete a specific medication"
-      description: |
-        Deletes a specific medication for the authenticated user based on the provided medication ID.
+      summary: "Delete a medication for a user"
+      description: "Deletes a specific medication for the authenticated user."
       parameters:
         - in: path
           name: med_id
@@ -1445,6 +2095,7 @@ definitions:
         type: string
         format: date-time
         description: "Date and time when the user was last updated."
+
   MedicalRecord:
     type: object
     properties:
@@ -1484,6 +2135,7 @@ definitions:
         type: string
         description: "Name of the medical practitioner"
         example: "Dr. John Doe"
+
   Medication:
     type: object
     properties:
@@ -1507,14 +2159,32 @@ definitions:
         type: string
         example: "active"
         description: "Status of the medication (upcoming/completed/missed)."
+      count:
+        type: integer
+        example: 30
+        description: "Count of the medication."
       created_at:
         type: string
-        example: "2024-10-16 08:00:00"
+        format: date-time
+        example: "2024-10-16T08:00:00Z"
         description: "Creation timestamp of the medication."
       updated_at:
         type: string
-        example: "2024-10-16 09:00:00"
+        format: date-time
+        example: "2024-10-16T09:00:00Z"
         description: "Update timestamp of the medication."
+
+  MedicationList:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "SUCCESS"
+        description: "Response status."
+      medications:
+        type: array
+        items:
+          $ref: "#/definitions/Medication"
 
 securityDefinitions:
   jwt:
