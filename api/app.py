@@ -173,7 +173,6 @@ def check_medications():
 
         for medication in medications:
             user = User.query.get(medication.user_id)
-            user = User.query.get(medication.user_id)
             log_message(
                 f"Checking medications for emails... {user.email}     {medication.time.strftime('%I:%M %p')}       {now}",
                 Fore.BLUE,
@@ -245,9 +244,7 @@ def check_appointments():
         now = now + timedelta(hours=1)
 
         appointments = Appointment.query.filter(
-            (Appointment.start_time <= now)
-            & (Appointment.end_time >= now)
-            & (Appointment.status != "Completed")
+            (Appointment.status != "Completed") & (Appointment.status != "Missed")
         ).all()
         log_message("Checking appointments for emails...", Fore.RED)
 
@@ -263,11 +260,9 @@ def check_appointments():
             # If the appointment is about to start (within 30 minutes)
             if now <= appointment.start_time <= now + timedelta(minutes=30):
                 if appointment.status == "Upcoming":
-                    appointment.status = "Notified"
                     formatted_start_time = appointment.start_time.strftime(
                         "%A, %B %d, %Y at %I:%M %p"
                     )
-
                     email_body = (
                         f"Dear {user.full_name},\n\n"
                         f"This is a reminder for your upcoming appointment:\n\n"
@@ -284,12 +279,16 @@ def check_appointments():
                         footer="Looking forward to seeing you soon!\nPlease arrive 10 minutes before your scheduled time. If you have any questions or need to reschedule, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
                         current_year=datetime.now().year,
                     )
+                    appointment.status = "30mins_Notified"
 
             # If the appointment is ongoing and status is still 'Upcoming'
             if (
                 appointment.start_time <= now <= appointment.end_time
-                and appointment.status == "Notified"
+                and appointment.status == "30mins_Notified"
             ):
+                formatted_start_time = appointment.start_time.strftime(
+                    "%A, %B %d, %Y at %I:%M %p"
+                )
                 email_body = (
                     f"Dear {user.full_name},\n\n"
                     f"This is a reminder that your appointment is currently ongoing:\n\n"
@@ -304,17 +303,16 @@ def check_appointments():
                     name=user.full_name,
                     subject="Your Appointment is Ongoing",
                     body=email_body,
-                    action_url=f"https://myhealthvault-backend.onrender.com/join_appointment/{appointment.id}",
+                    action_url=f"https://myhealthvault-backend.onrender.com/api/join_appointment/{appointment.id}",
                     action_text="Join The Meeting",
                     footer="We hope to see you soon!\nIf you have any questions or need assistance during your appointment, please feel free to contact us.\n\n"
                     "Best regards,\nThe HealthCare Team",
                     current_year=datetime.now().year,
                 )
-
+                appointment.status = "Notified"
             # If the appointment is finished and the status is not 'Completed'
             elif now > appointment.end_time and appointment.status == "Ongoing":
                 # Update appointment status to 'Completed'
-                appointment.status = "Completed"
 
                 # Format the end time
                 formatted_end_time = appointment.end_time.strftime(
@@ -340,10 +338,10 @@ def check_appointments():
                     footer="We hope your appointment went well! If you have any questions or need additional help, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
                     current_year=datetime.now().year,
                 )
+                appointment.status = "Completed"
 
             elif now > appointment.end_time and appointment.status == "Notified":
                 # Update appointment status to 'Missed'
-                appointment.status = "Missed"
 
                 # Format the end time
                 formatted_end_time = appointment.end_time.strftime(
@@ -366,12 +364,13 @@ def check_appointments():
                     to=user.email,
                     name=user.full_name,
                     subject="Missed Appointment",
-                    action_url="https://example.com/get-started",
+                    action_url="https://myhealthvault-backend.onrender.com/apidocs",
                     action_text="Reschedule Your Appointment",
                     body=email_body,
                     footer="We'd love to help you get back on track. Please use the link above to reschedule. If you need assistance, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",
                     current_year=datetime.now().year,
                 )
+                appointment.status = "Missed"
 
             db.session.commit()
 
@@ -381,8 +380,8 @@ def check_appointments():
 swagger = Swagger(app, template_file="swagger_doc.yaml")
 
 # Scheduler to check appointments and medications
-scheduler.add_job(func=check_appointments, trigger="interval", seconds=90)
-scheduler.add_job(func=check_medications, trigger="interval", seconds=60)
+scheduler.add_job(func=check_appointments, trigger="interval", seconds=60)
+scheduler.add_job(func=check_medications, trigger="interval", seconds=90)
 
 # Scheduler setup
 
@@ -391,7 +390,6 @@ if __name__ == "__main__":
     """Main Function"""
     with app.app_context():
         from datetime import datetime
-
 
         db.create_all()
     host = environ.get("HBNB_API_HOST", "0.0.0.0")

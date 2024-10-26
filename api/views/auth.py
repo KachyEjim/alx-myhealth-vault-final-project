@@ -488,9 +488,10 @@ def join_appointment(appointment_id):
     from flask import redirect
     from models.appointment import Appointment
 
-    now = datetime.now()
-
+    now = datetime.utcnow() + timedelta(hours=1)
     appointment = Appointment.query.get(appointment_id)
+    print(f"{now}")
+
     if not appointment:
         return (
             jsonify(
