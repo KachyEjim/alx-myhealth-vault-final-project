@@ -1,4 +1,3 @@
-from flask_sqlalchemy import SQLAlchemy
 import bcrypt
 from .base_model import BaseModel
 from api import db
@@ -14,14 +13,17 @@ class Doctor(BaseModel):
         updated_at (DateTimeField): A DateTime field representing the last update timestamp.
         full_name (StringField): The full name of the doctor.
         phone_number (StringField): The phone number of the doctor.
+        gender (StringField): The gender of the doctor.
+        address (StringField): The address of the doctor.
         email (EmailField): The email address of the doctor.
         password (StringField): The password of the doctor.
-        specialization (StringField): The medical specialization of the doctor.
-        license_number (StringField): The doctor's medical license number.
-        hospital_affiliation (StringField): The hospital or institution the doctor is affiliated with.
-        bio (StringField): Short biography or description of the doctor.
+        age (IntField): The age of the doctor.
         profile_picture (URLField): URL of the doctor's profile picture.
+        specialization (StringField): The field of specialization of the doctor.
+        years_of_experience (IntField): Number of years the doctor has been practicing.
+        consultation_fee (FloatField): Fee for a consultation with the doctor.
         is_active (BooleanField): Boolean field indicating if the doctor's account is active.
+        bio (StringField): Short biography or description of the doctor.
         last_login (DateTimeField): Timestamp of the last login.
     """
 
@@ -29,17 +31,24 @@ class Doctor(BaseModel):
 
     full_name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(15), nullable=True)
+    gender = db.Column(db.String(10), nullable=False, default="Other")
+    address = db.Column(db.String(255), nullable=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    specialization = db.Column(db.String(100), nullable=True)
-    license_number = db.Column(db.String(50), unique=True, nullable=True)
-    hospital_affiliation = db.Column(db.String(100), nullable=True)
-    bio = db.Column(db.String(500), nullable=True, default="")
+    age = db.Column(db.Integer, nullable=True)
     profile_picture = db.Column(db.String(255), nullable=True)
+    specialization = db.Column(db.String(100), nullable=True)
+    years_of_experience = db.Column(db.Integer, nullable=False, default=0)
+    license_number = db.Column(db.String(50), unique=True, nullable=True)
     is_active = db.Column(db.Boolean, default=False)
+    bio = db.Column(db.String(500), nullable=True, default="")
     last_login = db.Column(db.DateTime, nullable=True)
+    is_verified = db.Column(db.Boolean, default=False)
 
-    appointments = db.relationship("Appointment", back_populates="doctor")
+    role = db.Column(db.String(10), nullable=False, default="doctor")
+    appointments = db.relationship(
+        "Appointment", back_populates="doctor", cascade="all, delete-orphan", lazy=True
+    )
 
     def __repr__(self):
         return f"<Doctor {self.full_name} ({self.email})>"
@@ -67,13 +76,16 @@ class Doctor(BaseModel):
             "id": getattr(self, "id", None),
             "full_name": getattr(self, "full_name", None),
             "phone_number": getattr(self, "phone_number", None),
+            "gender": getattr(self, "gender", None),
+            "address": getattr(self, "address", None),
             "email": getattr(self, "email", None),
-            "specialization": getattr(self, "specialization", None),
-            "license_number": getattr(self, "license_number", None),
-            "hospital_affiliation": getattr(self, "hospital_affiliation", None),
-            "bio": getattr(self, "bio", None),
+            "age": getattr(self, "age", None),
             "profile_picture": getattr(self, "profile_picture", None),
+            "specialization": getattr(self, "specialization", None),
+            "years_of_experience": getattr(self, "years_of_experience", None),
+            "consultation_fee": getattr(self, "consultation_fee", None),
             "is_active": getattr(self, "is_active", None),
+            "bio": getattr(self, "bio", None),
             "last_login": (
                 self.last_login.isoformat()
                 if getattr(self, "last_login", None)

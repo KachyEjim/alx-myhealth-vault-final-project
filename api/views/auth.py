@@ -40,6 +40,7 @@ def signup():
             400,
         )
 
+    password = str(password)
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
         return (

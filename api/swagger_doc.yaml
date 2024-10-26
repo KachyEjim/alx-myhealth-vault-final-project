@@ -15,138 +15,225 @@ paths:
         - "UserAuth"
       summary: "Register a new user"
       description: |
-        Creates a new user account by providing required details such 
-        as full name, email, password, and optional information like 
-        phone number, address, gender, and age.
+        Registers a new user by creating an account with required details
+        (full name, email, password) and optional fields (phone number, address, gender, age).
       parameters:
         - in: body
           name: body
           required: true
-          description: "User registration details."
+          description: "User registration details"
           schema:
             type: object
             properties:
               full_name:
                 type: string
                 example: "John Doe"
-                description: "Full name of the user."
+                description: "Full name of the user"
               email:
                 type: string
                 example: "john.doe@example.com"
-                description: "Email address of the user."
+                description: "Email address of the user"
               password:
                 type: string
                 example: "your_secure_password"
-                description: "User's chosen password."
+                description: "User's password (required)"
               phone_number:
                 type: string
                 example: "+1234567890"
-                description: "Optional phone number of the user."
+                description: "User's phone number (optional)"
               gender:
                 type: string
                 enum: ["Male", "Female", "Other"]
                 default: "Other"
-                description: "Gender of the user."
+                description: "User's gender (optional)"
               address:
                 type: string
                 example: "123 Main Street, City, Country"
-                description: "Optional address of the user."
+                description: "User's address (optional)"
               age:
                 type: integer
                 example: 30
-                description: "Optional age of the user."
+                description: "User's age (optional)"
       responses:
         201:
-          description: "User registered successfully."
+          description: "User registered successfully"
+          schema:
+            type: object
+            properties:
+              msg:
+                type: string
+                example: "User registered successfully! Verification email sent."
+              status:
+                type: boolean
+                example: true
+              statusCode:
+                type: integer
+                example: 201
+              data:
+                $ref: "#/definitions/User" # Assuming User is defined under `definitions`
         400:
-          description: "Missing required fields or email already in use."
-        500:
-          description: "Internal server error."
-
-  /login:
-    post:
-      tags:
-        - "UserAuth"
-      summary: "User login"
-      description: |
-        Authenticates a user by verifying their email and password. 
-        Returns access and refresh tokens if successful.
-      parameters:
-        - in: body
-          name: body
-          required: true
-          description: "Login credentials."
-          schema:
-            type: object
-            properties:
-              email:
-                type: string
-                example: "john.doe@example.com"
-                description: "User's email address."
-              password:
-                type: string
-                example: "your_secure_password"
-                description: "User's password."
-      responses:
-        200:
-          description: "Login successful."
-          schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: "Success message."
-              access_token:
-                type: string
-                description: "Access token for authorized requests."
-              refresh_token:
-                type: string
-                description: "Refresh token for renewing access."
-              user:
-                $ref: "#/definitions/User"
-        401:
-          description: "Invalid email or password."
-        403:
-          description: "User not verified."
-        500:
-          description: "Internal server error."
-  /refresh:
-    post:
-      tags:
-        - "UserAuth"
-      summary: "Refresh access token"
-      description: "Generate a new access token using the refresh token."
-      responses:
-        200:
-          description: "Access token refreshed successfully."
-          schema:
-            type: object
-            properties:
-              access_token:
-                type: string
-                example: "new_access_token_here"
-        401:
-          description: "Unauthorized. Refresh token is missing or invalid."
+          description: "Missing required fields or email already in use"
           schema:
             type: object
             properties:
               error:
                 type: string
-                example: "UNAUTHORIZED"
-              message:
+                example: "MISSING_FIELDS or USER_EXISTS"
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 400
+              msg:
                 type: string
-                example: "Refresh token is missing or invalid."
+                example: "Full name, email, and password are required."
         500:
-          description: "Internal server error."
+          description: "Internal server error"
           schema:
             type: object
             properties:
               error:
                 type: string
                 example: "INTERNAL_SERVER_ERROR"
-              message:
+              status:
+                type: boolean
+                example: false
+              statusCode:
+                type: integer
+                example: 500
+              msg:
                 type: string
                 example: "An unexpected error occurred."
+
+/login:
+  post:
+    tags:
+      - "UserAuth"
+    summary: "User login"
+    description: |
+      Authenticates a user by verifying their email and password. 
+      Returns access and refresh tokens if successful.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        description: "Login credentials."
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+              example: "john.doe@example.com"
+              description: "User's email address."
+            password:
+              type: string
+              example: "your_secure_password"
+              description: "User's password."
+    responses:
+      200:
+        description: "Login successful."
+        schema:
+          type: object
+          properties:
+            msg:
+              type: string
+              example: "Login successful."
+              description: "Success message."
+            status:
+              type: boolean
+              example: true
+              description: "Indicates whether the login was successful."
+            statusCode:
+              type: integer
+              example: 200
+              description: "HTTP status code for successful login."
+            access_token:
+              type: string
+              example: "access_token_here"
+              description: "Access token for authorized requests."
+            refresh_token:
+              type: string
+              example: "refresh_token_here"
+              description: "Refresh token for renewing access."
+            user:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                  description: "User ID."
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+                  description: "User's email address."
+                role:
+                  type: string
+                  example: "user"
+                  description: "User's role."
+      401:
+        description: "Invalid email or password."
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "INVALID_CREDENTIALS"
+              description: "Error code for invalid credentials."
+            status:
+              type: boolean
+              example: false
+              description: "Indicates whether the login was successful."
+            statusCode:
+              type: integer
+              example: 401
+              description: "HTTP status code for invalid credentials."
+            msg:
+              type: string
+              example: "Invalid email or password."
+              description: "Error message for invalid credentials."
+      403:
+        description: "User not verified."
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "USER_NOT_VERIFIED"
+              description: "Error code for unverified users."
+            status:
+              type: boolean
+              example: false
+              description: "Indicates whether the login was successful."
+            statusCode:
+              type: integer
+              example: 403
+              description: "HTTP status code for unverified users."
+            msg:
+              type: string
+              example: "Please verify your email before logging in."
+              description: "Error message for unverified users."
+      500:
+        description: "Internal server error."
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "INTERNAL_SERVER_ERROR"
+              description: "Error code for internal server errors."
+            status:
+              type: boolean
+              example: false
+              description: "Indicates whether the login was successful."
+            statusCode:
+              type: integer
+              example: 500
+              description: "HTTP status code for server error."
+            msg:
+              type: string
+              example: "An unexpected error occurred."
+              description: "Error message for unexpected server errors."
 
   /verify-email/{token}:
     get:

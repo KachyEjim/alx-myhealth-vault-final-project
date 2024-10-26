@@ -1,5 +1,4 @@
 import bcrypt
-from flask_sqlalchemy import SQLAlchemy
 from .base_model import BaseModel
 from api import db
 

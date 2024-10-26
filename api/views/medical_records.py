@@ -182,24 +182,48 @@ def create_record(user_id):
         )
 
 
-@app_views.route("/user_records/<user_id>", methods=["GET"], strict_slashes=False)
+@app_views.route(
+    "/user_records/<user_id>", methods=["GET", "POST"], strict_slashes=False
+)
 @jwt_required()
 def get_user_medical_records(user_id):
     user = User.query.get(user_id)
 
     if not user:
-        return jsonify({"error": "USER_NOT_FOUND", "message": "User not found."}), 404
+        return (
+            jsonify(
+                {
+                    "error": "USER_NOT_FOUND",
+                    "status": False,
+                    "statusCode": 404,
+                    "msg": "User not found.",
+                }
+            ),
+            404,
+        )
 
     try:
         # Check if the content type is JSON and get the JSON data
-        if request.content_type == "application/json":
+        try:
             data = request.get_json()
-        else:
+        except Exception:
             data = None  # No JSON provided
 
         # If JSON data is not present, return all records
         if data is None:
             records = MedicalRecords.query.filter_by(user_id=user_id).all()
+            if not records:
+                return (
+                    jsonify(
+                        {
+                            "error": "NO_RECORDS_FOUND",
+                            "msg": "No medical records found for this user.",
+                            "status": False,
+                            "statusCode": 404,
+                        }
+                    ),
+                    404,
+                )
             return (
                 jsonify(
                     {
@@ -221,7 +245,9 @@ def get_user_medical_records(user_id):
                     jsonify(
                         {
                             "error": "NO_RECORDS_FOUND",
-                            "message": "No medical records found for this user.",
+                            "msg": "No medical records found for this user.",
+                            "status": False,
+                            "statusCode": 404,
                         }
                     ),
                     404,
@@ -297,7 +323,9 @@ def get_user_medical_records(user_id):
                 jsonify(
                     {
                         "error": "NO_RECORDS_FOUND",
-                        "message": "No medical records found for this user.",
+                        "msg": "No medical records found for this user.",
+                        "status": False,
+                        "statusCode": 404,
                     }
                 ),
                 404,
@@ -315,7 +343,17 @@ def get_user_medical_records(user_id):
             200,
         )
     except Exception as e:
-        return jsonify({"error": "INTERNAL_SERVER_ERROR", "msg": str(e)}), 500
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "msg": str(e),
+                    "status": False,
+                    "statusCode": 500,
+                }
+            ),
+            500,
+        )
 
 
 @app_views.route(
@@ -328,7 +366,12 @@ def update_medical_record(record_id):
     if not medical_record:
         return (
             jsonify(
-                {"error": "RECORD_NOT_FOUND", "message": "Medical record not found."}
+                {
+                    "error": "RECORD_NOT_FOUND",
+                    "msg": "Medical record not found.",
+                    "status": False,
+                    "statusCode": 404,
+                }
             ),
             404,
         )
@@ -341,6 +384,8 @@ def update_medical_record(record_id):
                     {
                         "error": "NO_INPUT_DATA_FOUND",
                         "message": "No input data provided.",
+                        "status": False,
+                        "statusCode": 400,
                     }
                 ),
                 400,
@@ -433,7 +478,7 @@ def update_medical_record(record_id):
                     "error": "INTERNAL_SERVER_ERROR",
                     "status": False,
                     "statusCode": 500,
-                    "message": str(e),
+                    "msg": str(e),
                 }
             ),
             500,
@@ -481,7 +526,7 @@ def delete_medical_record(record_id):
                     "error": "INTERNAL_SERVER_ERROR",
                     "status": False,
                     "statusCode": 500,
-                    "message": str(e),
+                    "msg": str(e),
                 }
             ),
             500,

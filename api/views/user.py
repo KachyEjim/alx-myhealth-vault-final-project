@@ -3,23 +3,27 @@ from flask import request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from api import db
 from models.user import User
-from werkzeug.utils import secure_filename
 from PIL import Image
-import os
-import tempfile
+
 from api.config import bucket
 from api.views.routes import upload_file, allowed_file, IMAGE_EXTENSIONS
 
 
-@app_views.route("/user", methods=["GET"], strict_slashes=False)
+@app_views.route("/user/", methods=["GET", "POST"], strict_slashes=False)
+@app_views.route("/user/<id>", methods=["GET", "POST"], strict_slashes=False)
 @jwt_required()
-def get_user():
-    try:
-        data = request.get_json()
+def get_user(id=None):
 
+    try:
+        try:
+            data = request.get_json()
+        except Exception:
+            data = {}
         email = data.get("email")
         user_id = data.get("id")
-        if user_id:
+        if id:
+            user = User.query.get(id)
+        elif user_id:
             user = User.query.get(user_id)
         elif email:
             user = User.query.filter_by(email=email).first()
@@ -73,7 +77,9 @@ def get_user():
         )
 
 
-@app_views.route("/update_user/<user_id>", methods=["PUT"], strict_slashes=False)
+@app_views.route(
+    "/update_user/<user_id>", methods=["PUT", "PATCH"], strict_slashes=False
+)
 @jwt_required()
 def update_user(user_id):
     current_user_id = get_jwt_identity()
@@ -112,7 +118,7 @@ def update_user(user_id):
         user.gender = data.get("gender", user.gender)
         user.address = data.get("address", user.address)
         user.age = data.get("age", user.age)
-
+        user.bio = data.get("bio", user.bio)
         db.session.commit()
         return (
             jsonify(
