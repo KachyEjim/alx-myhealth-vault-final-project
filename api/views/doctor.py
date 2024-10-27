@@ -7,7 +7,7 @@ from models.doctor import Doctor
 
 @app_views.route("/doctor/<id>", methods=["GET", "POST"], strict_slashes=False)
 @app_views.route(
-    "/doctor", methods=["POST"], strict_slashes=False
+    "/doctor", methods=["GET", "POST"], strict_slashes=False
 )  # Optional route for POST with email or doctor_id
 @jwt_required()
 def get_doctor(id=None):

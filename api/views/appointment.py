@@ -158,6 +158,7 @@ def update_appointment(appointment_id):
     appointment.end_time = data.get("end_time", appointment.end_time)
     appointment.description = data.get("description", appointment.description)
     appointment.doctor_id = data.get("doctor_id", appointment.doctor_id)
+    appointment.status = data.get("status", appointment.status)
 
     try:
         db.session.commit()
