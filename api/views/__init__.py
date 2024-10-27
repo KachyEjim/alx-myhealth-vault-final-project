@@ -9,3 +9,5 @@ from .medical_records import *
 from .appointment import *
 from .dashboard import *
 from .medicaton import *
+from .auth_doctor import *
+from .doctor import *

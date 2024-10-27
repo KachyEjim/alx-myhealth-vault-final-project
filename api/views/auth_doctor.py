@@ -57,7 +57,7 @@ def doctor_signup():
             specialization=specialization,
             email=email,
             password=password,
-            experience_years=years_of_experience,
+            years_of_experience=years_of_experience,
         )
         new_doctor.hash_password()
 

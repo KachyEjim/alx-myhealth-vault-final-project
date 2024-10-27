@@ -120,7 +120,7 @@ def update_doctor(doctor_id):
         doctor.specialization = data.get("specialty", doctor.specialty)
         doctor.address = data.get("address", doctor.address)
         doctor.years_of_experience = data.get(
-            "experience_years", doctor.experience_years
+            "years_of_experience", doctor.years_of_experience
         )
         doctor.license_number = data.get("license_number", doctor.license_number)
         doctor.bio = data.get("bio", doctor.bio)
