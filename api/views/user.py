@@ -211,7 +211,6 @@ def delete_user(user_id):
         )
 
 
-
 @app_views.route(
     "/upload-profile-picture/<user_id>", methods=["POST"], strict_slashes=False
 )

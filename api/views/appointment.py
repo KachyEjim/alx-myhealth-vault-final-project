@@ -11,7 +11,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 def error_response(status, code, message, status_code=400):
     return (
         jsonify(
-            {"status": status, "statusCode": status_code, "error": code, "msg": message}
+            {"status": False, "statusCode": status_code, "error": code, "msg": message}
         ),
         status_code,
     )
@@ -42,13 +42,14 @@ def get_appointments(user_id):
             return error_response(
                 "ERROR", "APPOINTMENT_NOT_FOUND", "Appointment not found.", 404
             )
+        if Appointment.doctor_id:
+            
         return success_response(
             "Appointment retrieved successfully.", appointment.to_dict()
         )
 
     query = Appointment.query.filter_by(user_id=user_id)
-    quer = Appointment.query.filter_by(user_id=user_id).all()
-    print(quer)
+
     start_time = data.get("start_time", None)
     end_time = data.get("end_time", None)
     status = data.get("status", None)

@@ -117,7 +117,7 @@ def update_doctor(doctor_id):
         data = request.get_json()
         doctor.full_name = data.get("full_name", doctor.full_name)
         doctor.phone_number = data.get("phone_number", doctor.phone_number)
-        doctor.specialization = data.get("specialty", doctor.specialty)
+        doctor.specialization = data.get("specialization", doctor.specialization)
         doctor.address = data.get("address", doctor.address)
         doctor.years_of_experience = data.get(
             "years_of_experience", doctor.years_of_experience
