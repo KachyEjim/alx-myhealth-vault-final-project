@@ -23,14 +23,21 @@ class Appointment(BaseModel):
         """
         Convert the Appointment object into a dictionary, using `.getattr()` to avoid attribute errors.
         """
+        doctor_id = (getattr(self, "doctor_id", None),)
+
+        if doctor_id:
+            from models.doctor import Doctor
+
+            doctor = Doctor.query.get(doctor_id)
+
         return {
             "id": getattr(self, "id", None),
             "start_time": (self.start_time.isoformat() if self.start_time else None),
             "end_time": (self.end_time.isoformat() if self.end_time else None),
-            "doctor_id": getattr(self, "doctor_id", None),
-            "user_id": getattr(self, "user_id", None),
             "status": getattr(self, "status", None),
             "description": getattr(self, "description", None),
+            "user_id": getattr(self, "user_id", None),
+            "doctor": doctor.to_dict() if doctor else {},
             "created_at": (
                 self.created_at.isoformat()
                 if getattr(self, "created_at", None)

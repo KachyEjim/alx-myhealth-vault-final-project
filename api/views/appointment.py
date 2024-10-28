@@ -42,8 +42,7 @@ def get_appointments(user_id):
             return error_response(
                 "ERROR", "APPOINTMENT_NOT_FOUND", "Appointment not found.", 404
             )
-        if Appointment.doctor_id:
-            
+
         return success_response(
             "Appointment retrieved successfully.", appointment.to_dict()
         )
