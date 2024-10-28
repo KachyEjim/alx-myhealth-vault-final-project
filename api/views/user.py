@@ -338,7 +338,6 @@ def profile_picture_upload(user_id):
 
             # Extract content type from the image
             content_type = img.mimetype
-            print(content_type)
 
             try:
                 user = User.query.get(user_id)

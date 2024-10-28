@@ -65,13 +65,15 @@ def save_medications():
         return error_response("ERROR", "INTERNAL_SERVER_ERROR", str(e), 500)
 
 
-@app_views.route("/get-medications", methods=["POST"], strict_slashes=False)
+@app_views.route("/get-medications", methods=["POST", "GET"], strict_slashes=False)
 @jwt_required()
 def get_medications():
     try:
         user_id = get_jwt_identity()
-        data = request.get_json()
-
+        try:
+            data = request.get_json()
+        except Exception:
+            data = {}
         # Extract filter parameters
         filters = {
             "id": data.get("id"),

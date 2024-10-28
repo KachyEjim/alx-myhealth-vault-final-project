@@ -26,7 +26,7 @@ def signup():
     email = data.get("email")
     password = data.get("password")
     age = data.get("age")
-
+    role = data.get("role")
     if not all([full_name, email, password]):
         return (
             jsonify(
@@ -64,6 +64,7 @@ def signup():
             email=email,
             password=password,
             age=age,
+            role=role,
         )
         new_user.hash_password()
 

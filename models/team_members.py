@@ -27,15 +27,15 @@ class TeamMember(BaseModel):
     phone_number = db.Column(db.String(15), nullable=True)
     designation = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(255), nullable=True)
-    profile_picture = db.Column(db.String(255), nullable=True)
-    facebook_link = db.Column(db.String(50), nullable=True)
-    x_link = db.Column(db.String(50), nullable=True)
-    linkdin_link = db.Column(db.String(50), nullable=True)
-    insta_link = db.Column(db.String(50), nullable=True)
-    github_link = db.Column(db.String(50), nullable=True)
+    profile_picture = db.Column(db.String(300), nullable=True)
+    facebook_link = db.Column(db.String(225), nullable=True)
+    x_link = db.Column(db.String(225), nullable=True)
+    linkdin_link = db.Column(db.String(225), nullable=True)
+    insta_link = db.Column(db.String(225), nullable=True)
+    github_link = db.Column(db.String(225), nullable=True)
 
-    role = db.Column(db.String(10), default="team_memeber", nullable=True)
-    gender = db.Column(db.String(10), nullable=False, default="Male")
+    role = db.Column(db.String(225), default="team_memeber", nullable=True)
+    gender = db.Column(db.String(100), nullable=False, default="Male")
     age = db.Column(db.Integer, nullable=True)
 
     def __repr__(self):
@@ -58,7 +58,6 @@ class TeamMember(BaseModel):
             "linkdin_link": getattr(self, "linkdin_link", None),
             "x_link": getattr(self, "x_link", None),
             "facebook_link": getattr(self, "facebook_link", None),
-          
             "gender": getattr(self, "gender", None),
             "age": getattr(self, "age", None),
             "created_at": (

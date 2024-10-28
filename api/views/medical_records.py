@@ -538,7 +538,6 @@ def delete_file():
     data = request.get_json()
     file_path = data.get("file_path")
 
-    # Validate if the file_path is provided
     if not file_path:
         return (
             jsonify(
