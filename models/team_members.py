@@ -27,7 +27,7 @@ class TeamMember(BaseModel):
     phone_number = db.Column(db.String(15), nullable=True)
     designation = db.Column(db.String(100), nullable=True)
     address = db.Column(db.String(255), nullable=True)
-    profile_picture = db.Column(db.String(300), nullable=True)
+    profile_picture = db.Column(db.String(500), nullable=True)
     facebook_link = db.Column(db.String(225), nullable=True)
     x_link = db.Column(db.String(225), nullable=True)
     linkdin_link = db.Column(db.String(225), nullable=True)

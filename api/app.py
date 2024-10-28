@@ -155,82 +155,94 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
 
 
 def check_medications():
-
     with app.app_context():
-        now = datetime.utcnow() + timedelta(hours=1)
-        now = now.time()
+        now = (
+            datetime.utcnow() + timedelta(hours=1)
+        ).time()  # Get the current UTC time plus one hour offset
 
         log_message("Checking medications for emails...", Fore.YELLOW)
 
         medications = Medication.query.filter(
-            (Medication.time <= now)
-            & ((Medication.status == "upcoming") | (Medication.status == "ongoing"))
-            & (
-                (Medication.last_sent.is_(None))
-                | (Medication.last_sent != date.today())
-            )
+            ((Medication.status == "upcoming") | (Medication.status == "ongoing"))
         ).all()
 
         for medication in medications:
-            user = User.query.get(medication.user_id)
-            log_message(
-                f"Checking medications for emails... {user.email}     {medication.time.strftime('%I:%M %p')}       {now}",
-                Fore.BLUE,
-            )
-            # If the medication is about to be taken
-            if medication.count_left > 0:
-                # Compose the email body with witty and funny elements
-                email_body = (
-                    f"Hey {user.full_name},\n\n"
-                    f"🎉 It's time to take your {medication.name}! 🎉\n\n"
-                    "You know what they say, 'A pill a day keeps the doctor away... unless you’re too busy binging your favorite show!'\n\n"
-                    f"🕒 Scheduled Time: {medication.time.strftime('%I:%M %p')}\n"
-                    f"💊 Count Left: {medication.count_left} (but who’s counting? Just take it! 😄)\n\n"
-                    "Don’t forget, taking your meds is important! Remember, the only thing that should be on the rocks is your drink, not your health!\n\n"
-                    "Cheers to good health!\n"
-                    "Best,\nThe HealthCare Team 😊"
-                )
+            for schedule in medication.duration:
+                try:
+                    scheduled_time = datetime.strptime(
+                        schedule["time"], "%H:%M"
+                    ).time()  # Parse the scheduled time
+                except (KeyError, ValueError) as e:
+                    log_message(
+                        f"Skipping due to invalid time format in duration: {schedule}",
+                        Fore.RED,
+                    )
+                    continue
 
-                # Send the notification email
-                send_email(
-                    to=user.email,
-                    name=user.full_name,
-                    subject=f"Time to Take Your Medication: {medication.name}",
-                    body=email_body,
-                    footer="Stay healthy and keep smiling! Remember, laughter is the best medicine, but don't skip the actual medicine! 😂\n\nBest regards,\nThe HealthCare Team",
-                    current_year=datetime.now().year,
-                )
-
-                # Update medication status to 'ongoing' and decrement count_left
-                medication.status = "ongoing"
-                medication.count_left -= 1
-                medication.last_sent = date.today()
-
-                # If count_left reaches zero, send a congratulatory email
-                if medication.count_left == 0:
-                    # Compose the congratulatory email body
-                    congratulatory_email_body = (
-                        f"Congratulations, {user.full_name}! 🎉\n\n"
-                        f"You've successfully completed your course of {medication.name}!\n\n"
-                        "They say good things come to those who wait, but great things come to those who take their medication!\n\n"
-                        "Now, go ahead and treat yourself! Maybe a little ice cream? Just don’t forget to take your next dose... of happiness!\n\n"
-                        "Cheers to your health and well-being!\n"
-                        "Best,\nThe HealthCare Team 😊"
+                # If the scheduled time matches the current time within an acceptable threshold (e.g., +/- 5 minutes)
+                if (
+                    abs(
+                        (
+                            datetime.combine(date.today(), scheduled_time)
+                            - datetime.combine(date.today(), now)
+                        ).total_seconds()
+                    )
+                    <= 700
+                ):
+                    user = User.query.get(medication.user_id)
+                    log_message(
+                        f"Medication reminder for {user.email} - {medication.name} scheduled at {scheduled_time.strftime('%I:%M %p')} - current time: {now}",
+                        Fore.BLUE,
                     )
 
-                    # Send the completion notification email
-                    send_email(
-                        to=user.email,
-                        name=user.full_name,
-                        subject=f"Congrats on Completing Your Medication: {medication.name}!",
-                        body=congratulatory_email_body,
-                        footer="Keep up the great work, and remember, taking care of yourself is a lifelong adventure! 🏆\n\nBest regards,\nThe HealthCare Team",
-                        current_year=datetime.now().year,
-                    )
-                    medication.status = "completed"
-                    medication.last_sent = date.today()
+                    # Proceed only if there are remaining doses
+                    if medication.count_left > 0:
+                        email_body = (
+                            f"Hey {user.full_name},\n\n"
+                            f"🎉 It's time to take your {medication.name}! 🎉\n\n"
+                            "You know what they say, 'A pill a day keeps the doctor away... unless you’re too busy binging your favorite show!'\n\n"
+                            f"🕒 Scheduled Time: {scheduled_time.strftime('%I:%M %p')}\n"
+                            f"💊 Count Left: {medication.count_left} (but who’s counting? Just take it! 😄)\n\n"
+                            "Don’t forget, taking your meds is important! Remember, the only thing that should be on the rocks is your drink, not your health!\n\n"
+                            "Cheers to good health!\n"
+                            "Best,\nThe HealthCare Team 😊"
+                        )
 
-                db.session.commit()
+                        send_email(
+                            to=user.email,
+                            name=user.full_name,
+                            subject=f"Time to Take Your Medication: {medication.name}",
+                            body=email_body,
+                            footer="Stay healthy and keep smiling! Remember, laughter is the best medicine, but don't skip the actual medicine! 😂\n\nBest regards,\nThe HealthCare Team",
+                            current_year=datetime.now().year,
+                        )
+
+                        # Update medication status to 'ongoing' and decrement count_left
+                        medication.status = "ongoing"
+                        medication.count_left -= 1
+
+                        # If count_left reaches zero, send a congratulatory email
+                        if medication.count_left == 0:
+                            congratulatory_email_body = (
+                                f"Congratulations, {user.full_name}! 🎉\n\n"
+                                f"You've successfully completed your course of {medication.name}!\n\n"
+                                "They say good things come to those who wait, but great things come to those who take their medication!\n\n"
+                                "Now, go ahead and treat yourself! Maybe a little ice cream? Just don’t forget to take your next dose... of happiness!\n\n"
+                                "Cheers to your health and well-being!\n"
+                                "Best,\nThe HealthCare Team 😊"
+                            )
+
+                            send_email(
+                                to=user.email,
+                                name=user.full_name,
+                                subject=f"Congrats on Completing Your Medication: {medication.name}!",
+                                body=congratulatory_email_body,
+                                footer="Keep up the great work, and remember, taking care of yourself is a lifelong adventure! 🏆\n\nBest regards,\nThe HealthCare Team",
+                                current_year=datetime.now().year,
+                            )
+                            medication.status = "completed"
+
+                        db.session.commit()
 
 
 # Function to update appointment statuses and send notifications
@@ -381,7 +393,7 @@ swagger = Swagger(app, template_file="swagger_doc.yaml")
 
 # Scheduler to check appointments and medications
 scheduler.add_job(func=check_appointments, trigger="interval", seconds=60)
-scheduler.add_job(func=check_medications, trigger="interval", seconds=90)
+scheduler.add_job(func=check_medications, trigger="interval", seconds=20)
 
 # Scheduler setup
 
