@@ -23,8 +23,8 @@ class Appointment(BaseModel):
         """
         Convert the Appointment object into a dictionary, using `.getattr()` to avoid attribute errors.
         """
-        doctor_id = (getattr(self, "doctor_id", None),)
-
+        doctor_id = getattr(self, "doctor_id", None)
+        doctor = None
         if doctor_id:
             from models.doctor import Doctor
 

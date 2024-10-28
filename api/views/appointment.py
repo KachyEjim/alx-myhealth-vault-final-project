@@ -85,7 +85,6 @@ def get_appointments(user_id):
             )
 
     appointments = query.all()
-    print(appointments)
     if not appointments:
         return error_response(
             "ERROR", "NO_APPOINTMENTS_FOUND", "No appointments found.", 404

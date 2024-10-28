@@ -9,6 +9,36 @@ from api.config import bucket
 from api.views.routes import upload_file, allowed_file, IMAGE_EXTENSIONS
 
 
+@app_views.route("/all_users/", methods=["GET"], strict_slashes=False)
+@jwt_required()
+def all_users():
+    try:
+        users = User.query.all()
+        user_dict = [user.to_dict() for user in users]
+        return (
+            jsonify(
+                {
+                    "status": True,
+                    "statusCode": 200,
+                    "data": user_dict,
+                }
+            ),
+            200,
+        )
+    except Exception as e:
+        return (
+            jsonify(
+                {
+                    "error": "INTERNAL_SERVER_ERROR",
+                    "status": False,
+                    "statusCode": 500,
+                    "msg": str(e),
+                }
+            ),
+            500,
+        )
+
+
 @app_views.route("/user/", methods=["GET", "POST"], strict_slashes=False)
 @app_views.route("/user/<id>", methods=["GET", "POST"], strict_slashes=False)
 @jwt_required()
