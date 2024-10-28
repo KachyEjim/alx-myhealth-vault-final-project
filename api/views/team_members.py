@@ -7,7 +7,6 @@ from models.team_members import TeamMember
 
 # Route to create a new team member
 @app_views.route("/team_member", methods=["POST"], strict_slashes=False)
-@jwt_required()
 def create_team_member():
     try:
         data = request.get_json()
@@ -88,8 +87,7 @@ def create_team_member():
 
 
 # Route to update a team member
-@app_views.route("/team_member/<int:member_id>", methods=["PUT"], strict_slashes=False)
-@jwt_required()
+@app_views.route("/team_member/member_id>", methods=["PUT"], strict_slashes=False)
 def update_team_member(member_id):
     try:
         data = request.get_json()
@@ -150,9 +148,7 @@ def update_team_member(member_id):
         )
 
 
-@app_views.route(
-    "/team_member/<int:member_id>", methods=["DELETE"], strict_slashes=False
-)
+@app_views.route("/team_member/<member_id>", methods=["DELETE"], strict_slashes=False)
 @jwt_required()
 def delete_team_member(member_id):
     data = get_jwt()
@@ -218,9 +214,7 @@ def delete_team_member(member_id):
         )
 
 
-# Route to get all team members
 @app_views.route("/team_members", methods=["GET"], strict_slashes=False)
-@jwt_required()
 def get_all_team_members():
     try:
         members = TeamMember.query.all()
@@ -232,7 +226,6 @@ def get_all_team_members():
 
 # Route to get a specific team member by criteria (ID or email)
 @app_views.route("/team_member", methods=["GET"], strict_slashes=False)
-@jwt_required()
 def get_team_member():
     try:
         data = request.get_json() or {}
@@ -289,27 +282,11 @@ def get_team_member():
 @app_views.route(
     "/team-memeber/profile-picture/<id>", methods=["POST"], strict_slashes=False
 )
-@jwt_required()
 def team_picture_upload(id):
     from PIL import Image
 
     from api.config import bucket
     from api.views.routes import upload_file, allowed_file, IMAGE_EXTENSIONS
-
-    current_user_id = get_jwt_identity()
-
-    if current_user_id != id:
-        return (
-            jsonify(
-                {
-                    "error": "UNAUTHORIZED",
-                    "status": False,
-                    "statusCode": 403,
-                    "msg": "You can only upload a profile picture to your own account.",
-                }
-            ),
-            403,
-        )
 
     if request.method == "POST":
         try:
