@@ -149,6 +149,8 @@ def update_user(user_id):
         user.address = data.get("address", user.address)
         user.age = data.get("age", user.age)
         user.bio = data.get("bio", user.bio)
+        role = data.get("role", user.role)
+
         db.session.commit()
         return (
             jsonify(
