@@ -46,6 +46,7 @@ def dashboard():
                         "totalAppointments": total_appointments,
                         "totalMedicationTracking": total_medication_tracking,
                         "list_of_upcoming_appointments": upcoming_appointments,
+                        "total_users": total_users,
                     },
                 }
             ),
