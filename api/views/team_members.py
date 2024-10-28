@@ -286,9 +286,11 @@ def get_team_member():
         )
 
 
-@app_views.route("/upload-profile-picture/<id>", methods=["POST"], strict_slashes=False)
+@app_views.route(
+    "/team-memeber/profile-picture/<id>", methods=["POST"], strict_slashes=False
+)
 @jwt_required()
-def profile_picture_upload(id):
+def team_picture_upload(id):
     from PIL import Image
 
     from api.config import bucket
