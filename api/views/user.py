@@ -113,18 +113,19 @@ def get_user(id=None):
 @jwt_required()
 def update_user(user_id):
     data = get_jwt()
-    if (data.get("sub") != user_id) and (data.get("role") != "SuperAdmin"):
-        return (
-            jsonify(
-                {
-                    "error": "UNAUTHORIZED",
-                    "status": False,
-                    "statusCode": 403,
-                    "msg": "You can only update your own information.",
-                }
-            ),
-            403,
-        )
+    if data.get("sub") != user_id:
+        if data.get("role") != "SuperAdmin":
+            return (
+                jsonify(
+                    {
+                        "error": "UNAUTHORIZED",
+                        "status": False,
+                        "statusCode": 403,
+                        "msg": "You can only update your own information.",
+                    }
+                ),
+                403,
+            )
 
     user = User.query.get(user_id)
     if not user:
