@@ -156,24 +156,23 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
 
 def check_medications():
     with app.app_context():
+        # Current time with an offset for your timezone
         now = (datetime.utcnow() + timedelta(hours=1)).time()
 
         # Define time slots and their names
         time_slots = {
-            "morning": (0, 12),  # 8:00 AM to 11:59 AM
+            "morning": (8, 12),  # 8:00 AM to 11:59 AM
             "afternoon": (12, 18),  # 12:00 PM to 5:59 PM
             "night": (18, 24),  # 6:00 PM to 11:59 PM
         }
 
-        # Determine current time slot
+        # Determine current time slot based on current hour
         current_hour = now.hour
         current_period = None
         for period, (start, end) in time_slots.items():
             if start <= current_hour < end:
                 current_period = period
                 break
-        print(current_hour)
-        print(current_period)
 
         log_message("Checking medications for emails...", Fore.YELLOW)
 
@@ -185,14 +184,19 @@ def check_medications():
             for schedule in medication.duration:
                 try:
                     scheduled_time = datetime.strptime(schedule["time"], "%H:%M").time()
+                    period_for_schedule = schedule.get("when").lower()
                 except (KeyError, ValueError):
                     log_message(
                         f"Invalid time format in duration: {schedule}", Fore.RED
                     )
                     continue
 
-                # Only proceed if the time slot has not been sent today
-                if current_period and medication.last_sent_period != current_period:
+                # Ensure the scheduled time period matches the current period and hasn't been sent today
+                if (
+                    current_period
+                    and period_for_schedule == current_period
+                    and medication.last_sent_period != current_period
+                ):
                     # Check if current time matches scheduled time within 5 minutes
                     if (
                         abs(
@@ -201,7 +205,7 @@ def check_medications():
                                 - datetime.combine(date.today(), now)
                             ).total_seconds()
                         )
-                        <= 700
+                        <= 300
                     ):
                         user = User.query.get(medication.user_id)
                         log_message(
