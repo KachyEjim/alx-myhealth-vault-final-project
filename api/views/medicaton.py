@@ -53,7 +53,11 @@ def save_medications():
 
         # Check each entry in the duration list for valid time format
         for index, entry in enumerate(duration):
-            when = entry.get("when")
+            when = (
+                (entry.get("when")).lower()
+                if (entry.get("when") and isinstance(str, entry.get("when")))
+                else ""
+            )
             time = entry.get("time")
 
             if not when or not time:

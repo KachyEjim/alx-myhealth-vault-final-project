@@ -156,93 +156,103 @@ def send_email(name, to, subject, body, template_name="email_template.html", **k
 
 def check_medications():
     with app.app_context():
-        now = (
-            datetime.utcnow() + timedelta(hours=1)
-        ).time()  # Get the current UTC time plus one hour offset
+        now = (datetime.utcnow() + timedelta(hours=1)).time()
+
+        # Define time slots and their names
+        time_slots = {
+            "morning": (8, 12),  # 8:00 AM to 11:59 AM
+            "afternoon": (12, 18),  # 12:00 PM to 5:59 PM
+            "night": (18, 24),  # 6:00 PM to 11:59 PM
+        }
+
+        # Determine current time slot
+        current_hour = now.hour
+        current_period = None
+        for period, (start, end) in time_slots.items():
+            if start <= current_hour < end:
+                current_period = period
+                break
 
         log_message("Checking medications for emails...", Fore.YELLOW)
 
         medications = Medication.query.filter(
             ((Medication.status == "upcoming") | (Medication.status == "ongoing"))
+            & (
+                (Medication.last_sent.is_(None))
+                | (Medication.last_sent != date.today())
+            )
         ).all()
 
         for medication in medications:
             for schedule in medication.duration:
                 try:
-                    scheduled_time = datetime.strptime(
-                        schedule["time"], "%H:%M"
-                    ).time()  # Parse the scheduled time
-                except (KeyError, ValueError) as e:
+                    scheduled_time = datetime.strptime(schedule["time"], "%H:%M").time()
+                except (KeyError, ValueError):
                     log_message(
-                        f"Skipping due to invalid time format in duration: {schedule}",
-                        Fore.RED,
+                        f"Invalid time format in duration: {schedule}", Fore.RED
                     )
                     continue
 
-                # If the scheduled time matches the current time within an acceptable threshold (e.g., +/- 5 minutes)
-                if (
-                    abs(
-                        (
-                            datetime.combine(date.today(), scheduled_time)
-                            - datetime.combine(date.today(), now)
-                        ).total_seconds()
-                    )
-                    <= 700
-                ):
-                    user = User.query.get(medication.user_id)
-                    log_message(
-                        f"Medication reminder for {user.email} - {medication.name} scheduled at {scheduled_time.strftime('%I:%M %p')} - current time: {now}",
-                        Fore.BLUE,
-                    )
-
-                    # Proceed only if there are remaining doses
-                    if medication.count_left > 0:
-                        email_body = (
-                            f"Hey {user.full_name},\n\n"
-                            f"🎉 It's time to take your {medication.name}! 🎉\n\n"
-                            "You know what they say, 'A pill a day keeps the doctor away... unless you’re too busy binging your favorite show!'\n\n"
-                            f"🕒 Scheduled Time: {scheduled_time.strftime('%I:%M %p')}\n"
-                            f"💊 Count Left: {medication.count_left} (but who’s counting? Just take it! 😄)\n\n"
-                            "Don’t forget, taking your meds is important! Remember, the only thing that should be on the rocks is your drink, not your health!\n\n"
-                            "Cheers to good health!\n"
-                            "Best,\nThe HealthCare Team 😊"
+                # Only proceed if the time slot has not been sent today
+                if current_period and medication.last_sent_period != current_period:
+                    # Check if current time matches scheduled time within 5 minutes
+                    if (
+                        abs(
+                            (
+                                datetime.combine(date.today(), scheduled_time)
+                                - datetime.combine(date.today(), now)
+                            ).total_seconds()
+                        )
+                        <= 700
+                    ):
+                        user = User.query.get(medication.user_id)
+                        log_message(
+                            f"Medication reminder for {user.email} - {medication.name} at {scheduled_time.strftime('%I:%M %p')} - current time: {now}",
+                            Fore.BLUE,
                         )
 
-                        send_email(
-                            to=user.email,
-                            name=user.full_name,
-                            subject=f"Time to Take Your Medication: {medication.name}",
-                            body=email_body,
-                            footer="Stay healthy and keep smiling! Remember, laughter is the best medicine, but don't skip the actual medicine! 😂\n\nBest regards,\nThe HealthCare Team",
-                            current_year=datetime.now().year,
-                        )
-
-                        # Update medication status to 'ongoing' and decrement count_left
-                        medication.status = "ongoing"
-                        medication.count_left -= 1
-
-                        # If count_left reaches zero, send a congratulatory email
-                        if medication.count_left == 0:
-                            congratulatory_email_body = (
-                                f"Congratulations, {user.full_name}! 🎉\n\n"
-                                f"You've successfully completed your course of {medication.name}!\n\n"
-                                "They say good things come to those who wait, but great things come to those who take their medication!\n\n"
-                                "Now, go ahead and treat yourself! Maybe a little ice cream? Just don’t forget to take your next dose... of happiness!\n\n"
-                                "Cheers to your health and well-being!\n"
-                                "Best,\nThe HealthCare Team 😊"
+                        if medication.count_left > 0:
+                            email_body = (
+                                f"Hey {user.full_name},\n\n"
+                                f"🎉 It's time to take your {medication.name}! 🎉\n\n"
+                                f"🕒 Scheduled Time: {scheduled_time.strftime('%I:%M %p')}\n"
+                                f"💊 Count Left: {medication.count_left}\n\n"
+                                "Cheers to good health!\nThe HealthCare Team 😊"
                             )
 
                             send_email(
                                 to=user.email,
                                 name=user.full_name,
-                                subject=f"Congrats on Completing Your Medication: {medication.name}!",
-                                body=congratulatory_email_body,
-                                footer="Keep up the great work, and remember, taking care of yourself is a lifelong adventure! 🏆\n\nBest regards,\nThe HealthCare Team",
+                                subject=f"Time to Take Your Medication: {medication.name}",
+                                body=email_body,
+                                footer="Stay healthy and keep smiling!",
                                 current_year=datetime.now().year,
                             )
-                            medication.status = "completed"
 
-                        db.session.commit()
+                            # Update medication status and decrement count
+                            medication.status = "ongoing"
+                            medication.count_left -= 1
+                            medication.last_sent_period = (
+                                current_period  # Mark period as sent
+                            )
+
+                            if medication.count_left == 0:
+                                congratulatory_email_body = (
+                                    f"Congratulations, {user.full_name}! 🎉\n\n"
+                                    f"You've completed your course of {medication.name}!\n\n"
+                                    "Cheers to your health and well-being!\nThe HealthCare Team 😊"
+                                )
+                                send_email(
+                                    to=user.email,
+                                    name=user.full_name,
+                                    subject=f"Congrats on Completing Your Medication: {medication.name}!",
+                                    body=congratulatory_email_body,
+                                    footer="Keep up the great work!",
+                                    current_year=datetime.now().year,
+                                )
+                                medication.status = "completed"
+
+                            db.session.commit()
 
 
 # Function to update appointment statuses and send notifications

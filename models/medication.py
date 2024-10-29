@@ -15,6 +15,10 @@ class Medication(BaseModel):
     user_id = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("User", back_populates="medications")
 
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
     def __repr__(self):
         return f"<Medication {self.name}>"
 

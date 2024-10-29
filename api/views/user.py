@@ -112,9 +112,9 @@ def get_user(id=None):
 )
 @jwt_required()
 def update_user(user_id):
-    current_user_id = get_jwt_identity()
+    data = get_jwt()
 
-    if current_user_id != user_id:
+    if (data.get("sub") != user_id) and (data.get("role") != "SuperAdmin"):
         return (
             jsonify(
                 {
