@@ -177,10 +177,6 @@ def check_medications():
 
         medications = Medication.query.filter(
             ((Medication.status == "upcoming") | (Medication.status == "ongoing"))
-            & (
-                (Medication.last_sent.is_(None))
-                | (Medication.last_sent != date.today())
-            )
         ).all()
 
         for medication in medications:

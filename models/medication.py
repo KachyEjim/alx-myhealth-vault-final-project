@@ -14,6 +14,7 @@ class Medication(BaseModel):
     status = db.Column(db.String(50), nullable=False, default="upcoming")
     user_id = db.Column(db.String(50), db.ForeignKey("users.id"), nullable=False)
     user = db.relationship("User", back_populates="medications")
+    last_sent_period = db.Column(db.String(20), nullable=True)
 
     def __init__(self, *args, **kwargs):
 
