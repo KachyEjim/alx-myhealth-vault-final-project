@@ -12,3 +12,4 @@ from .medicaton import *
 from .auth_doctor import *
 from .doctor import *
 from .team_members import *
+from .extra import *
