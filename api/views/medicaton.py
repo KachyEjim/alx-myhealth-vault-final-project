@@ -55,9 +55,10 @@ def save_medications():
         for index, entry in enumerate(duration):
             when = (
                 (entry.get("when")).lower()
-                if (entry.get("when") and isinstance(str, entry.get("when")))
+                if (entry.get("when") and isinstance(entry.get("when"), str))
                 else ""
             )
+
             time = entry.get("time")
 
             if not when or not time:

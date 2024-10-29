@@ -160,7 +160,7 @@ def check_medications():
 
         # Define time slots and their names
         time_slots = {
-            "morning": (8, 12),  # 8:00 AM to 11:59 AM
+            "morning": (0, 12),  # 8:00 AM to 11:59 AM
             "afternoon": (12, 18),  # 12:00 PM to 5:59 PM
             "night": (18, 24),  # 6:00 PM to 11:59 PM
         }
@@ -172,6 +172,8 @@ def check_medications():
             if start <= current_hour < end:
                 current_period = period
                 break
+        print(current_hour)
+        print(current_period)
 
         log_message("Checking medications for emails...", Fore.YELLOW)
 
