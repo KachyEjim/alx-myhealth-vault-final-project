@@ -388,7 +388,7 @@ def check_appointments():
                     to=user.email,
                     name=user.full_name,
                     subject="Missed Appointment",
-                    action_url="https://myhealthvault-backend.onrender.com/apidocs",
+                    action_url="https://incomparable-parfait-456242.netlify.app/",
                     action_text="Reschedule Your Appointment",
                     body=email_body,
                     footer="We'd love to help you get back on track. Please use the link above to reschedule. If you need assistance, feel free to contact us.\n\nBest regards,\nThe HealthCare Team",

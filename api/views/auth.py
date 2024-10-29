@@ -212,9 +212,7 @@ def verify_email(token):
         user.is_verified = True
         db.session.commit()
 
-        return redirect(
-            "https://incomparable-parfait-456242.netlify.app/auth/login", code=302
-        )
+        return redirect("https://incomparable-parfait-456242.netlify.app/", code=302)
 
     except ExpiredSignatureError:
         return (
@@ -512,7 +510,7 @@ def join_appointment(appointment_id):
         except Exception as e:
             return jsonify({"error": "INTERNAL_SERVER_ERROR", "message": str(e)}), 500
 
-        redirect_url = "https://incomparable-parfait-456242.netlify.app/auth/login/?redirect_to=/appointments/reschedule"
+        redirect_url = "https://incomparable-parfait-456242.netlify.app/?redirect_to=/appointments/reschedule"
         return redirect(redirect_url)
 
     return (

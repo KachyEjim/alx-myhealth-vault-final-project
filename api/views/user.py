@@ -265,7 +265,10 @@ def profile_picture_upload(user_id):
 
     if request.method == "POST":
         try:
+            print(request.form)
+            print(request.files)
             if "image" not in request.files:
+
                 return (
                     jsonify(
                         {
